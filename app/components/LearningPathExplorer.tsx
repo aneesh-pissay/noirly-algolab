@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { lessonHref } from '@/app/data/lessonRoutes';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -107,7 +108,7 @@ function LessonCard({ lesson, status }: { lesson: Lesson; status: LessonStatusTy
   }
 
   return (
-    <Link href={`/visualizer/${lesson.algorithmId}`} className={`focusable block ${cardClass}`}>
+    <Link href={lessonHref(lesson.id)} className={`focusable block ${cardClass}`}>
       {inner}
     </Link>
   );

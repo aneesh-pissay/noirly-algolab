@@ -674,19 +674,19 @@ export const tracks: Track[] = [
           description: 'Opposite ends and slow/fast pointer techniques.',
           lessons: {
             Easy: [
-              lesson('pat-two-sum', 'Two Sum (Sorted)', 'array-two-sum', 'Easy', 'O(n)', 'O(1)'),
+              lesson('pat-two-sum', 'Two Sum (Sorted)', 'array-two-sum-sorted', 'Easy', 'O(n)', 'O(1)'),
               lesson('pat-reverse', 'Reverse Array', 'array-reverse', 'Easy', 'O(n)', 'O(1)'),
               lesson('pat-palindrome', 'Palindrome Check', 'string-palindrome-check', 'Easy', 'O(n)', 'O(1)'),
             ],
             Medium: [
-              lesson('pat-remove-dup', 'Remove Duplicates', 'hashset-remove-duplicates', 'Medium', 'O(n)', 'O(n)'),
+              lesson('pat-remove-dup', 'Remove Duplicates (Sorted)', 'array-remove-duplicates-sorted', 'Medium', 'O(n)', 'O(1)'),
               lesson('pat-dutch', 'Dutch Flag', 'array-dutch-flag', 'Medium', 'O(n)', 'O(1)'),
               lesson('pat-merge-sorted', 'Merge Sorted', 'array-merge-sorted', 'Medium', 'O(n+m)', 'O(1)'),
             ],
             Hard: [
               lesson('pat-rain', 'Trapping Rain Water', 'array-rain-water', 'Hard', 'O(n)', 'O(1)'),
               lesson('pat-intervals', 'Merge Intervals', 'array-merge-intervals', 'Hard', 'O(n log n)', 'O(n)'),
-              lesson('pat-three-sum', 'Three Sum Pattern', 'array-two-sum', 'Hard', 'O(n²)', 'O(1)'),
+              lesson('pat-three-sum', 'Three Sum', 'array-three-sum', 'Hard', 'O(n²)', 'O(1)'),
             ],
           },
         },
@@ -705,9 +705,11 @@ export const tracks: Track[] = [
               lesson('pat-subarray-k', 'Subarray Sum K', 'hashmap-subarray-sum-equals-k', 'Medium', 'O(n)', 'O(n)'),
             ],
             Hard: [
-              lesson('pat-longest-unique', 'Longest Unique Substring', 'string-longest-palindromic-substring', 'Hard', 'O(n)', 'O(1)'),
-              lesson('pat-anagrams', 'Count Anagrams', 'hashmap-group-anagrams', 'Hard', 'O(n)', 'O(1)'),
-              lesson('pat-task-sched', 'Task Scheduler', 'queue-task-scheduler', 'Hard', 'O(n)', 'O(1)'),
+              lesson('pat-longest-unique', 'Longest Unique Substring', 'string-longest-unique-substring', 'Hard', 'O(n)', 'O(k)'),
+              lesson('pat-anagrams', 'Count Anagrams', 'string-count-anagrams', 'Hard', 'O(n)', 'O(1)'),
+              // Was 'pat-task-sched' (Task Scheduler): a greedy/heap problem, not a
+              // window one. It stays in the Queue topic as 'queue-task-scheduler'.
+              lesson('pat-sw-median', 'Sliding Window Median', 'heap-sliding-window-median', 'Hard', 'O(n log k)', 'O(k)'),
             ],
           },
         },
@@ -799,6 +801,40 @@ export function getAllLessons(): Lesson[] {
   return all;
 }
 
+export interface LessonContext {
+  lesson: Lesson;
+  track: Track;
+  level: Level;
+  topic: Topic;
+}
+
+/** A lesson and where it sits. Lesson ids are unique; algorithm ids are not. */
+export function findLessonById(lessonId: string): LessonContext | null {
+  for (const track of tracks) {
+    for (const level of levels) {
+      for (const topic of track.topics[level] ?? []) {
+        for (const diff of difficulties) {
+          const found = topic.lessons[diff]?.find((l) => l.id === lessonId);
+          if (found) return { lesson: found, track, level, topic };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** Breadcrumb labels for a lesson: track, level, topic, lesson. */
+export function getLessonPathById(lessonId: string): string[] {
+  const ctx = findLessonById(lessonId);
+  if (!ctx) return [];
+  return [ctx.track.title, ctx.level, ctx.topic.name, ctx.lesson.name];
+}
+
+/**
+ * First lesson using an algorithm. Several tracks reuse the same algorithm,
+ * so this is only for resolving old /visualizer/<algorithmId> links; route
+ * and look lessons up by id everywhere else.
+ */
 export function findLessonByAlgorithmId(algorithmId: string): {
   lesson: Lesson;
   track: Track;

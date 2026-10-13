@@ -68,7 +68,9 @@ function buildRegistry(): void {
             prev,
           };
 
-          LESSON_BY_ALGORITHM[lesson.algorithmId] = lesson.id;
+          // First lesson wins, matching findLessonByAlgorithmId (several
+          // tracks reuse an algorithm; lookups by lesson id are exact).
+          LESSON_BY_ALGORITHM[lesson.algorithmId] ??= lesson.id;
         });
       });
     }

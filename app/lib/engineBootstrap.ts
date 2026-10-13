@@ -10,6 +10,7 @@ import {
   registerIntermediateDataStructureAlgorithms,
   registerAdvancedDataStructureAlgorithms,
 } from '@/src/core';
+import { registerPatternAlgorithms } from '@/app/lib/patternAlgorithms';
 
 let bootstrapped = false;
 
@@ -25,6 +26,7 @@ export function bootstrapVisualizerEngine(): void {
   registerQueueAlgorithms(visualizerEngine);
   registerIntermediateDataStructureAlgorithms(visualizerEngine);
   registerAdvancedDataStructureAlgorithms(visualizerEngine);
+  registerPatternAlgorithms(visualizerEngine);
 
   bootstrapped = true;
 }

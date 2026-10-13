@@ -1,7 +1,4 @@
-import { getLessonMeta } from '@/src/features/progress/progress.utils';
-
-/** URL of a lesson page. */
+/** URL of a lesson page. Lessons are routed by lesson id (spec B6). */
 export function lessonHref(lessonId: string): string {
-  const meta = getLessonMeta(lessonId);
-  return `/visualizer/${meta?.algorithmId ?? lessonId}`;
+  return `/visualizer/${encodeURIComponent(lessonId)}`;
 }

@@ -1,29 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireUser } from '@/src/server/auth/session';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import {
-  buildAggregatedProgress,
-  completeLessonForUser,
-} from '@/lib/curriculum-progress';
-import {
-  ensureUserCurriculumProgress,
-  saveCurriculumProgress,
-  syncLegacyTopicProgress,
-} from '@/lib/user-collections';
+import { buildAggregatedProgress, completeLessonForUser } from '@/lib/curriculum-progress';
+import { ensureUserCurriculumProgress, saveCurriculumProgress, syncLegacyTopicProgress } from '@/lib/user-collections';
+import { readJsonBody } from '@/src/server/api/json';
+import { requireUser } from '@/src/server/auth/session';
+import { isValidPassedAttempt } from '@/src/server/quiz/attempts';
 
-// POST /api/progress/complete — complete a lesson and persist XP + unlocks
-export async function POST(request: NextRequest) {
+// Extra keys (an old client's `quizScore`) are accepted and ignored.
+const CompleteSchema = z.object({ lessonId: z.string().min(1).max(120) });
+
+/**
+ * POST /api/progress/complete — completes a lesson and persists XP + unlocks.
+ * Takes no score from the client (spec 5.1): it needs a quiz for this lesson
+ * that /api/quiz/submit graded as passed, and the lesson must be unlocked
+ * (spec B8). Completing an already-completed lesson is a no-op.
+ */
+export async function POST(request: Request) {
   try {
     const { userId } = await requireUser();
-
-    const { lessonId, algorithmId, quizScore } = await request.json();
-    const targetId = lessonId ?? algorithmId;
-    const score = typeof quizScore === 'number' ? Math.max(70, Math.min(100, Math.round(quizScore))) : 100;
-
-    if (!targetId || typeof targetId !== 'string') {
-      return NextResponse.json({ error: 'lessonId or algorithmId is required' }, { status: 400 });
-    }
+    const { lessonId } = await readJsonBody(request, CompleteSchema);
 
     await connectDB();
 
@@ -33,10 +30,22 @@ export async function POST(request: NextRequest) {
     }
 
     const doc = await ensureUserCurriculumProgress(userId);
+    const alreadyCompleted = (doc.completedLessons ?? []).includes(lessonId);
+    const attempt = doc.lastPassedAttempt;
+    const attemptValid = isValidPassedAttempt(attempt, lessonId);
+    if (!alreadyCompleted && !attemptValid) {
+      return NextResponse.json({ error: 'quiz_not_passed' }, { status: 403 });
+    }
 
-    const outcome = completeLessonForUser(user, doc, targetId, score);
+    const outcome = completeLessonForUser(user, doc, lessonId, {
+      score: attemptValid ? attempt.score : 0,
+      templated: attemptValid ? attempt.templated : true,
+    });
     if (!outcome) {
       return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+    if ('error' in outcome) {
+      return NextResponse.json({ error: 'lesson_locked' }, { status: 403 });
     }
 
     if (Object.keys(outcome.userUpdates).length > 0) {

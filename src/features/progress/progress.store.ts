@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import type { CompleteLessonResult, UserProgress } from './progress.types';
-import { getInitialProgress, getLessonById, getLessonStatus } from './progress.utils';
+import { getInitialProgress, getLessonMeta, getLessonStatus } from './progress.utils';
 import * as progressAPI from '@/src/services/progress.service';
 import { trackSave } from '@/src/stores/saving';
 
@@ -16,8 +16,9 @@ interface ProgressStore {
   isReady: boolean;
   loadProgress: () => Promise<void>;
   reset: () => void;
-  setCurrentLessonByAlgorithm: (algorithmId: string) => Promise<void>;
-  completeLesson: (lessonIdOrAlgorithmId: string, quizScore?: number) => Promise<CompleteLessonResult | null>;
+  setCurrentLesson: (lessonId: string) => Promise<void>;
+  /** Completes a lesson whose quiz the server has graded as passed. */
+  completeLesson: (lessonId: string) => Promise<CompleteLessonResult | null>;
   getLessonStatus: (lessonId: string) => import('./progress.types').LessonStatusType;
   isLessonCompleted: (lessonId: string) => boolean;
   isLessonUnlocked: (lessonId: string) => boolean;
@@ -46,8 +47,8 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     }
   },
 
-  setCurrentLessonByAlgorithm: async (algorithmId) => {
-    const meta = getLessonById(algorithmId);
+  setCurrentLesson: async (lessonId) => {
+    const meta = getLessonMeta(lessonId);
     const current = get().progress;
     if (!meta || !current) return;
     if (current.completedLessons.includes(meta.id)) return;
@@ -63,14 +64,14 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     }
   },
 
-  completeLesson: async (lessonIdOrAlgorithmId, quizScore = 100) => {
-    const lesson = getLessonById(lessonIdOrAlgorithmId);
+  completeLesson: async (lessonId) => {
+    const lesson = getLessonMeta(lessonId);
     if (!lesson) return null;
 
     const previous = get().progress;
 
     try {
-      const { progress, result } = await trackSave(progressAPI.completeLesson(lessonIdOrAlgorithmId, quizScore));
+      const { progress, result } = await trackSave(progressAPI.completeLesson(lesson.id));
       set({ progress, error: null });
       return result;
     } catch (error) {

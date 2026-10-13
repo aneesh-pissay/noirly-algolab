@@ -7,8 +7,8 @@ import { visualizerEngine } from '@/src/core/engine/VisualizerEngine';
 import { reverseArray } from '@/src/core/algorithms/two-pointers/reverseArray';
 import { AlgorithmStep, VisualizerState } from '@/src/core/engine/types';
 import { algorithmTheory } from '@/app/data/algorithmTheory';
-import AlgorithmChallenge from '@/app/components/AlgorithmChallenge';
-import { getChallengeForAlgorithm } from '@/app/data/algorithmChallenges';
+import Link from 'next/link';
+import { lessonHref } from '@/app/data/lessonRoutes';
 
 import { Icon } from '@/src/components/Icon';
 export default function ReverseArrayPage() {
@@ -23,7 +23,6 @@ export default function ReverseArrayPage() {
   const codeFileLabel = isTraversalAlias ? 'traversal.js' : 'reverseArray.js';
 
   const theory = algorithmTheory['reverse-array'];
-  const challengeQuestions = getChallengeForAlgorithm('reverse-array');
 
   useEffect(() => {
     // Register and execute algorithm
@@ -134,13 +133,16 @@ export default function ReverseArrayPage() {
         {/* Challenge View */}
         {activeTab === 'challenge' && (
           <div className="flex-1 overflow-y-auto p-4">
-            <AlgorithmChallenge
-              algorithmId="reverse-array"
-              levelId={1}
-              title={topicLabel}
-              topicTitle={topicLabel}
-              questions={challengeQuestions}
-            />
+            {/* The graded quiz lives in the lesson, where answers are checked on the server. */}
+            <div className="surface mx-auto max-w-xl space-y-4 rounded-[var(--r-lg)] p-6 text-center">
+              <h2 className="section-title">Test yourself on {topicLabel}</h2>
+              <p className="text-sm text-fg-2">
+                The quiz is part of the Arrays lesson in the learning path. Sign in to take it and save your progress.
+              </p>
+              <Link href={lessonHref('array-reverse')} className="btn btn-solid">
+                Open the lesson quiz
+              </Link>
+            </div>
           </div>
         )}
 

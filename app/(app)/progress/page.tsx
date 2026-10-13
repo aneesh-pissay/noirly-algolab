@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { lessonHref } from '@/app/data/lessonRoutes';
 import { useMemo } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { Card, EmptyState, PageContainer, PageHeader, StatCell, StatGroup } from '@noirly-dev/ui';
@@ -34,7 +35,8 @@ export default function ProgressPage() {
   const hydrated = useProgressHydrated();
   const progress = useProgressData();
   const all = getAllLessonMetas();
-  const completed = useMemo(() => new Set(progress.completedLessons), [progress.completedLessons]);
+  // Known lessons only: retired lesson ids may linger in old progress.
+  const completed = useMemo(() => new Set(progress.completedLessons.filter((id) => getLessonMeta(id))), [progress.completedLessons]);
   const continueLesson = useMemo(() => getContinueLesson(progress), [progress]);
 
   const breakdown = useMemo(
@@ -142,7 +144,7 @@ export default function ProgressPage() {
               lesson ? (
                 <li key={lesson.id} className="flex items-center gap-3 px-4 py-3">
                   <CheckCircle2 size={15} className="shrink-0 text-positive" aria-label="Completed" />
-                  <Link href={`/visualizer/${lesson.algorithmId}`} className="min-w-0 flex-1 truncate text-sm hover:text-accent">
+                  <Link href={lessonHref(lesson.id)} className="min-w-0 flex-1 truncate text-sm hover:text-accent">
                     {lesson.title}
                   </Link>
                   <span className="meta hidden sm:inline">

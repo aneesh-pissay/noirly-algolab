@@ -3,6 +3,12 @@ import { AlgorithmAction, AlgorithmCategory, AlgorithmStep } from '@/src/core/en
 type LineRule = number | ((step: AlgorithmStep) => number);
 
 const ALGORITHM_LINE_MAP: Record<string, Partial<Record<AlgorithmAction | 'default', LineRule>>> = {
+  // Pattern lessons (app/lib/patternAlgorithms.ts) carry exact snippet lines.
+  'array-two-sum-sorted': { default: (step) => step.codeLine },
+  'array-three-sum': { default: (step) => step.codeLine },
+  'array-remove-duplicates-sorted': { default: (step) => step.codeLine },
+  'string-longest-unique-substring': { default: (step) => step.codeLine },
+  'string-count-anagrams': { default: (step) => step.codeLine },
   'sorting-bubble': {
     initialize: 1,
     compare: 4,

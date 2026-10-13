@@ -5,10 +5,10 @@ import { ArrowRight } from 'lucide-react';
 import { visualizerEngine } from '@/src/core/engine/VisualizerEngine';
 import { Algorithm, AlgorithmStep, VisualizerState } from '@/src/core/engine/types';
 import { bootstrapVisualizerEngine } from '@/app/lib/engineBootstrap';
-import { findLessonByAlgorithmId } from '@/app/data/curriculum';
-import { getLessonTheory, getLessonQuiz } from '@/app/data/lessonContent';
+import { findLessonById } from '@/app/data/curriculum';
+import { getLessonTheory } from '@/app/data/lessonTheory';
 import { useSettings } from '@/app/contexts/SettingsContext';
-import { useProgressStore, getLessonByAlgorithmId, getLessonMeta } from '@/src/features/progress';
+import { useProgressStore, getLessonMeta } from '@/src/features/progress';
 import type { CompleteLessonResult } from '@/src/features/progress';
 import RendererFactory from './renderers/RendererFactory';
 import ExecutionPanel from './ExecutionPanel';
@@ -20,10 +20,10 @@ import LessonTheoryView from './LessonTheoryView';
 import LessonQuizView from './LessonQuizView';
 
 interface Props {
-  algorithmId: string;
+  lessonId: string;
 }
 
-export default function UniversalVisualizer({ algorithmId }: Props) {
+export default function UniversalVisualizer({ lessonId }: Props) {
   const { animationSpeed } = useSettings();
   const [algorithm, setAlgorithm] = useState<Algorithm | null>(null);
   const [state, setState] = useState<VisualizerState | null>(null);
@@ -35,24 +35,19 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
   const [stepProgress, setStepProgress] = useState({ visualize: false, theory: false, quiz: false });
   const [isCompleting, setIsCompleting] = useState(false);
 
-  const setCurrentLessonByAlgorithm = useProgressStore((s) => s.setCurrentLessonByAlgorithm);
+  const setCurrentLesson = useProgressStore((s) => s.setCurrentLesson);
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const isLessonCompleted = useProgressStore((s) => s.isLessonCompleted);
 
-  const lessonCtx = findLessonByAlgorithmId(algorithmId);
-  const lessonId = lessonCtx?.lesson.id;
-  const lessonName = lessonCtx?.lesson.name ?? algorithm?.name ?? algorithmId;
-  const alreadyCompleted = lessonId ? isLessonCompleted(lessonId) : false;
+  // Route by lesson id: several tracks reuse an algorithm, but each lesson has
+  // its own difficulty, complexity notes, breadcrumb and progress entry.
+  const lessonCtx = findLessonById(lessonId);
+  const algorithmId = lessonCtx?.lesson.algorithmId ?? lessonId;
+  const lessonName = lessonCtx?.lesson.name ?? algorithm?.name ?? lessonId;
+  const alreadyCompleted = isLessonCompleted(lessonId);
   const atFinalStep = state ? state.currentStep >= state.totalSteps - 1 : false;
 
-  const theory = useMemo(
-    () => getLessonTheory(algorithmId, algorithm, lessonName),
-    [algorithmId, algorithm, lessonName]
-  );
-  const quizQuestions = useMemo(
-    () => getLessonQuiz(algorithmId, algorithm, lessonName),
-    [algorithmId, algorithm, lessonName]
-  );
+  const theory = useMemo(() => getLessonTheory(lessonId, algorithm, lessonName), [lessonId, algorithm, lessonName]);
 
   useEffect(() => {
     bootstrapVisualizerEngine();
@@ -81,13 +76,13 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
 
     setState(visualizerEngine.getState());
     setCurrentStep(visualizerEngine.getCurrentStep());
-    setCurrentLessonByAlgorithm(algorithmId);
+    void setCurrentLesson(lessonId);
 
     return () => {
       unsubscribe();
       visualizerEngine.pause();
     };
-  }, [algorithmId, setCurrentLessonByAlgorithm]);
+  }, [algorithmId, lessonId, setCurrentLesson]);
 
   useEffect(() => {
     visualizerEngine.setSpeed(animationSpeed);
@@ -99,7 +94,7 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
     }
   }, [atFinalStep]);
 
-  const lessonMeta = lessonId ? getLessonMeta(lessonId) : getLessonByAlgorithmId(algorithmId);
+  const lessonMeta = getLessonMeta(lessonId);
   const nextLesson = lessonMeta?.next ? getLessonMeta(lessonMeta.next) : null;
   const learnPathHref = lessonCtx
     ? `/learn-path?track=${lessonCtx.track.id}&level=${lessonCtx.level}&topic=${lessonCtx.topic.id}`
@@ -130,11 +125,10 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
 
   const difficulty = lessonCtx?.lesson.difficulty ?? 'Easy';
 
-  const handleComplete = async (quizScore: number) => {
-    const lessonKey = lessonId ?? algorithmId;
+  const handleComplete = async () => {
     setIsCompleting(true);
     try {
-      const result = await completeLesson(lessonKey, quizScore);
+      const result = await completeLesson(lessonId);
       if (result) {
         setCompletionResult(result);
         setShowModal(true);
@@ -238,8 +232,8 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
       {activeStep === 'quiz' && (
         <div id="lesson-panel-quiz" role="tabpanel" aria-labelledby="lesson-tab-quiz" className="min-h-0 flex-1 overflow-auto">
           <LessonQuizView
+            lessonId={lessonId}
             lessonName={lessonName}
-            questions={quizQuestions}
             alreadyCompleted={alreadyCompleted}
             nextLesson={nextLesson}
             learnPathHref={learnPathHref}

@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireUser } from '@/src/server/auth/session';
 import connectDB from '@/lib/mongodb';
 import UserProgress from '@/models/UserProgress';
-import User from '@/models/User';
-import { calculateLevelFromXp, clampXpGain } from '@/lib/gamification';
-import { calculateNextStreak } from '@/lib/streak';
 
 // GET /api/user/progress - Get user learning progress
 export async function GET(request: NextRequest) {
@@ -36,7 +33,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await requireUser();
 
-    const { levelId, topicSlug, topicTitle, status, progress, timeSpent, score, notes, isBookmarked, xpGained } =
+    const { levelId, topicSlug, topicTitle, status, progress, timeSpent, score, notes, isBookmarked } =
       await request.json();
 
     if (!levelId || !topicSlug || !topicTitle) {
@@ -46,9 +43,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await connectDB();
+    // Plain values only: an object here would become a Mongo operator.
+    if (typeof topicSlug !== 'string' || typeof topicTitle !== 'string' || !Number.isInteger(levelId)) {
+      return NextResponse.json({ error: 'Invalid progress payload' }, { status: 400 });
+    }
 
-    const existingProgress = await UserProgress.findOne({ userId: userId, topicSlug });
+    await connectDB();
 
     const updateData: any = {
       userId: userId,
@@ -77,37 +77,11 @@ export async function POST(request: NextRequest) {
       { new: true, upsert: true, runValidators: true }
     );
 
-    let awardedXp = 0;
-    let leveledUp = false;
-    let currentLevel: number | null = null;
-
-    const isCompletingNow = status === 'completed' && progress === 100;
-    const wasAlreadyCompleted = existingProgress?.status === 'completed';
-
-    // Award XP only on first completion of a topic.
-    if (isCompletingNow && !wasAlreadyCompleted) {
-      const requestedXp = typeof xpGained === 'number' ? xpGained : 30;
-      awardedXp = clampXpGain(requestedXp);
-
-      if (awardedXp > 0) {
-        const user = await User.findById(userId).select('xp currentLevel');
-
-        if (user) {
-          const nextXp = (user.xp || 0) + awardedXp;
-          const nextLevel = calculateLevelFromXp(nextXp);
-          const streakResult = calculateNextStreak(user.lastActiveDate, user.streak || 0);
-          leveledUp = nextLevel > (user.currentLevel || 1);
-          currentLevel = nextLevel;
-
-          await User.findByIdAndUpdate(userId, {
-            xp: nextXp,
-            currentLevel: nextLevel,
-            streak: streakResult.streak,
-            ...(streakResult.shouldUpdateLastActiveDate ? { lastActiveDate: new Date() } : {}),
-          });
-        }
-      }
-    }
+    // XP is awarded only by /api/progress/complete, after a server-graded
+    // quiz. This legacy per-topic record never grants XP from client values.
+    const awardedXp = 0;
+    const leveledUp = false;
+    const currentLevel: number | null = null;
 
     return NextResponse.json({
       message: 'Progress updated successfully',

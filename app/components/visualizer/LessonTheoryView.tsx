@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { ArrowRight, BookOpen, Lightbulb, Target, ThumbsDown, ThumbsUp, Zap } from 'lucide-react';
-import type { LessonTheory } from '@/app/data/lessonContent';
+import type { LessonTheory } from '@/app/data/lessonTheory';
 
 interface Props {
   theory: LessonTheory;

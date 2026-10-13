@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { lessonHref } from '@/app/data/lessonRoutes';
 import { useMemo } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Card, PageContainer, PageHeader, StatCell, StatGroup } from '@noirly-dev/ui';
@@ -22,7 +23,8 @@ export default function DashboardPage() {
   const { completedLessons, recentlyCompleted } = progress;
 
   const allLessons = getAllLessonMetas();
-  const completedCount = completedLessons.length;
+  // Ignore ids of lessons that were retired from the curriculum.
+  const completedCount = completedLessons.filter((id) => getLessonMeta(id)).length;
   const overallProgress = allLessons.length ? Math.round((completedCount / allLessons.length) * 100) : 0;
 
   const continueLesson = useMemo(() => getContinueLesson(progress), [progress]);
@@ -70,7 +72,7 @@ export default function DashboardPage() {
           <p className="mt-1 text-sm text-fg-2">
             {continueTopic?.name ?? continueLesson.category} · {continueLesson.track.replace('-', ' ')} · {continueLesson.level}
           </p>
-          <Link href={`/visualizer/${continueLesson.algorithmId}`} className="btn btn-solid mt-5">
+          <Link href={lessonHref(continueLesson.id)} className="btn btn-solid mt-5">
             Resume lesson <ArrowRight size={14} aria-hidden />
           </Link>
         </Card>
@@ -113,7 +115,7 @@ export default function DashboardPage() {
               lesson ? (
                 <Link
                   key={lesson.id}
-                  href={`/visualizer/${lesson.algorithmId}`}
+                  href={lessonHref(lesson.id)}
                   className="surface surface-interactive grain focusable block rounded-[var(--r-lg)] p-4"
                 >
                   <p className="font-semibold text-fg">{lesson.title}</p>
