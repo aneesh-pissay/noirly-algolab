@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { AlgorithmStep } from '@/src/core/engine/types';
 import { getActionVariants } from './actionVariants';
+import { vizCellStyle, vizStateFor } from './vizState';
 
 interface Props {
   step: AlgorithmStep;
@@ -12,48 +13,55 @@ export default function QueueRenderer({ step }: Props) {
   const data = step.visualizationData ?? {};
   const queue: (number | string)[] = Array.isArray(data.queue) ? data.queue : [];
   const variants = getActionVariants(step.action);
+  const state = vizStateFor(step.action);
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-6">
-      <div className="flex w-full max-w-2xl items-center justify-between text-xs uppercase tracking-widest text-cyan-300/70">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-6 px-2 sm:px-6">
+      <div className="mono-label flex w-full max-w-2xl items-center justify-between" aria-hidden>
         <span>Front</span>
         <span>Rear</span>
       </div>
-      <div className="flex w-full max-w-2xl items-center gap-2 overflow-x-auto rounded-xl border border-white/10 bg-slate-900/50 p-4">
+      <ul
+        aria-label={`Queue, front to rear: ${queue.join(', ') || 'empty'}`}
+        className="flex w-full max-w-2xl items-center gap-2 overflow-x-auto rounded-[var(--r-lg)] bg-bg p-4 shadow-[inset_0_0_0_1px_var(--hairline)]"
+      >
         {queue.length === 0 ? (
-          <span className="w-full text-center text-sm text-slate-500">Empty queue</span>
+          <li className="w-full text-center text-sm text-fg-3">Empty queue</li>
         ) : (
           queue.map((value, index) => {
             const isFront = index === 0;
             const isRear = index === queue.length - 1;
+            const marked = isFront || isRear;
             return (
-              <motion.div
+              <motion.li
                 key={`${index}-${value}`}
                 layout
                 variants={variants}
                 initial="initial"
-                animate={isFront || isRear ? 'animate' : 'initial'}
-                className={`flex h-20 min-w-[5.5rem] shrink-0 items-center justify-center rounded-lg border font-mono text-xl font-semibold ${
-                  isFront || isRear
-                    ? 'border-primary bg-primary/15 text-primary'
-                    : 'border-white/10 bg-[rgba(31,41,55,0.8)] text-slate-200'
+                animate={marked ? 'animate' : 'initial'}
+                className={`relative flex h-16 min-w-[4.5rem] shrink-0 items-center justify-center rounded-[var(--r-md)] font-mono text-xl font-semibold sm:h-20 sm:min-w-[5.5rem] ${
+                  marked ? '' : 'border border-line bg-surface-2 text-fg'
                 }`}
+                style={marked ? vizCellStyle(state) : undefined}
               >
                 {value}
-              </motion.div>
+                {marked ? (
+                  <span className="absolute left-1.5 top-1 font-mono text-[10px] text-fg-2">{isFront ? 'front' : 'rear'}</span>
+                ) : null}
+              </motion.li>
             );
           })
         )}
-      </div>
-      <div className="flex gap-6 text-sm text-slate-400">
+      </ul>
+      <div className="flex gap-6 text-sm text-fg-2">
         {data.front != null && (
           <span>
-            Front: <span className="font-mono text-primary">{String(data.front)}</span>
+            Front: <span className="font-mono text-accent">{String(data.front)}</span>
           </span>
         )}
         {data.rear != null && (
           <span>
-            Rear: <span className="font-mono text-primary">{String(data.rear)}</span>
+            Rear: <span className="font-mono text-accent">{String(data.rear)}</span>
           </span>
         )}
       </div>

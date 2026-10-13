@@ -22,7 +22,7 @@ export default function GraphRenderer({ step }: Props) {
 
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-auto p-4">
-      <svg className="min-h-[300px] min-w-[400px]" viewBox="0 0 400 280">
+      <svg className="h-auto w-full max-w-[520px]" viewBox="0 0 400 280" role="img" aria-label={`Graph with ${nodes.length} nodes; ${visited.size} highlighted`}>
         {edges.map(([from, to], i) => {
           const a = nodes.find((n) => n.id === from);
           const b = nodes.find((n) => n.id === to);
@@ -34,7 +34,7 @@ export default function GraphRenderer({ step }: Props) {
               y1={a.y ?? 0}
               x2={b.x ?? 0}
               y2={b.y ?? 0}
-              stroke="rgba(148,163,184,0.4)"
+              stroke="var(--viz-idle)"
               strokeWidth={2}
             />
           );
@@ -47,15 +47,16 @@ export default function GraphRenderer({ step }: Props) {
                 cx={node.x ?? 0}
                 cy={node.y ?? 0}
                 r={28}
-                fill={active ? 'rgba(56,189,248,0.25)' : 'rgba(31,41,55,0.9)'}
-                stroke={active ? '#38bdf8' : 'rgba(148,163,184,0.5)'}
-                strokeWidth={2}
+                fill={active ? 'color-mix(in srgb, var(--viz-active) 18%, var(--surface))' : 'var(--surface-2)'}
+                stroke={active ? 'var(--viz-active)' : 'var(--viz-idle)'}
+                strokeWidth={active ? 3 : 1.5}
+                strokeDasharray={active ? undefined : '4 3'}
               />
               <text
                 x={node.x ?? 0}
                 y={(node.y ?? 0) + 5}
                 textAnchor="middle"
-                fill={active ? '#7dd3fc' : '#e2e8f0'}
+                fill="var(--text)"
                 fontSize={16}
                 fontFamily="monospace"
               >

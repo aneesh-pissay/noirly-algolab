@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import type { CompleteLessonResult, UserProgress } from './progress.types';
 import { getInitialProgress, getLessonById, getLessonStatus } from './progress.utils';
 import * as progressAPI from '@/src/services/progress.service';
+import { trackSave } from '@/src/stores/saving';
 
 /** Stable fallback — must not allocate a new object per selector call (React 19 / useSyncExternalStore). */
 const CACHED_INITIAL_PROGRESS = getInitialProgress();
@@ -55,7 +56,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     set({ progress: { ...current, currentLesson: meta.id } });
 
     try {
-      const updated = await progressAPI.updateCurrentLesson(meta.id);
+      const updated = await trackSave(progressAPI.updateCurrentLesson(meta.id));
       set({ progress: updated });
     } catch {
       /* keep optimistic current lesson */
@@ -69,7 +70,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     const previous = get().progress;
 
     try {
-      const { progress, result } = await progressAPI.completeLesson(lessonIdOrAlgorithmId, quizScore);
+      const { progress, result } = await trackSave(progressAPI.completeLesson(lessonIdOrAlgorithmId, quizScore));
       set({ progress, error: null });
       return result;
     } catch (error) {

@@ -17,7 +17,7 @@ export function LegalPage({
   return (
     <div className="flex min-h-dvh flex-1 flex-col">
       <PublicHeader />
-      <main id="main" className="flex flex-1 flex-col pt-16">
+      <main id="main" className="flex flex-1 flex-col">
         <article className="shell section-y">
           <div className="mx-auto flex max-w-3xl flex-col">
             <p className="eyebrow">{eyebrow}</p>

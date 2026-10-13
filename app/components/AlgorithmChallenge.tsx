@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiFetch } from '@/src/lib/api-client';
 
+import { Icon } from '@/src/components/Icon';
 interface ChallengeQuestion {
   id: string;
   question: string;
@@ -113,32 +114,30 @@ export default function AlgorithmChallenge({
 
   if (showResults) {
     return (
-      <div className="glass-card rounded-2xl p-8 max-w-2xl mx-auto">
+      <div className="surface rounded-2xl p-8 max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <div className={`w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center ${
-            isPassed ? 'bg-green-500/20 border-4 border-green-500' : 'bg-red-500/20 border-4 border-red-500'
+            isPassed ? 'bg-positive/20 border-4 border-positive' : 'bg-destructive/20 border-4 border-destructive'
           }`}>
-            <span className={`material-symbols-outlined text-6xl ${isPassed ? 'text-green-400' : 'text-red-400'}`}>
-              {isPassed ? 'check_circle' : 'cancel'}
-            </span>
+            <Icon name={isPassed ? 'check_circle' : 'cancel'} className={`text-6xl ${isPassed ? 'text-positive' : 'text-destructive'}`} />
           </div>
           
-          <h2 className="font-display text-title-lg font-bold text-white mb-2">
+          <h2 className="font-display text-title-lg font-bold text-fg mb-2">
             {isPassed ? '🎉 Challenge Passed!' : '📚 Keep Practicing!'}
           </h2>
-          <p className="text-on-surface-variant mb-4">
+          <p className="text-fg-2 mb-4">
             You scored {correctCount} out of {questions.length} questions correctly
           </p>
           
-          <div className="text-5xl font-bold text-primary mb-2">{score}%</div>
-          <p className="text-sm text-on-surface-variant">
+          <div className="text-5xl font-bold text-accent mb-2">{score}%</div>
+          <p className="text-sm text-fg-2">
             {isPassed ? 'You can now mark this algorithm as complete!' : 'You need 70% to pass. Try again!'}
           </p>
         </div>
 
         {/* Answer Review */}
         <div className="space-y-3 mb-6">
-          <h3 className="font-display text-sm font-bold text-on-surface-variant mb-3">ANSWER REVIEW</h3>
+          <h3 className="font-display text-sm font-bold text-fg-2 mb-3">ANSWER REVIEW</h3>
           {questions.map((q, index) => {
             const userAnswer = selectedAnswers[index];
             const isCorrect = userAnswer === q.correctAnswer;
@@ -146,17 +145,15 @@ export default function AlgorithmChallenge({
               <div
                 key={q.id}
                 className={`p-4 rounded-lg border ${
-                  isCorrect ? 'bg-green-500/5 border-green-500/30' : 'bg-red-500/5 border-red-500/30'
+                  isCorrect ? 'bg-positive/5 border-positive/30' : 'bg-destructive/5 border-destructive/30'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <span className={`material-symbols-outlined text-xl ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
-                    {isCorrect ? 'check_circle' : 'cancel'}
-                  </span>
+                  <Icon name={isCorrect ? 'check_circle' : 'cancel'} className={`text-xl ${isCorrect ? 'text-positive' : 'text-destructive'}`} />
                   <div className="flex-1">
-                    <p className="text-sm text-on-surface mb-1">Question {index + 1}</p>
+                    <p className="text-sm text-fg mb-1">Question {index + 1}</p>
                     {!isCorrect && (
-                      <p className="text-xs text-on-surface-variant">
+                      <p className="text-xs text-fg-2">
                         Correct answer: {q.options[q.correctAnswer]}
                       </p>
                     )}
@@ -171,7 +168,7 @@ export default function AlgorithmChallenge({
         <div className="flex gap-3">
           <button
             onClick={handleRetry}
-            className="flex-1 px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg transition-colors font-semibold"
+            className="flex-1 px-6 py-3 bg-surface-2 hover:bg-surface-2 text-fg rounded-lg transition-colors font-semibold"
           >
             Try Again
           </button>
@@ -179,11 +176,11 @@ export default function AlgorithmChallenge({
             <button
               onClick={handleComplete}
               disabled={isCompleting}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-tertiary hover:shadow-lg hover:shadow-primary/30 text-white rounded-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-negative hover:shadow-lg hover:shadow-accent/30 text-fg rounded-lg transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCompleting ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  <Icon name="progress_activity" className="text-sm animate-spin" />
                   Saving...
                 </span>
               ) : (
@@ -197,20 +194,20 @@ export default function AlgorithmChallenge({
   }
 
   return (
-    <div className="glass-card rounded-2xl p-8 max-w-2xl mx-auto">
+    <div className="surface rounded-2xl p-8 max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-title-lg font-bold text-white">{title} Challenge</h2>
-          <div className="text-sm text-on-surface-variant">
+          <h2 className="font-display text-title-lg font-bold text-fg">{title} Challenge</h2>
+          <div className="text-sm text-fg-2">
             Question {currentQuestionIndex + 1} of {questions.length}
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="h-1 bg-surface-container-high rounded-full overflow-hidden">
+        <div className="h-1 bg-surface-2 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-primary to-tertiary transition-all duration-300"
+            className="h-full bg-gradient-to-r from-accent to-negative transition-all duration-300"
             style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
           />
         </div>
@@ -218,7 +215,7 @@ export default function AlgorithmChallenge({
 
       {/* Question */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-on-surface mb-4">{currentQuestion.question}</h3>
+        <h3 className="text-lg font-semibold text-fg mb-4">{currentQuestion.question}</h3>
         
         <div className="space-y-3">
           {currentQuestion.options.map((option, index) => {
@@ -234,24 +231,22 @@ export default function AlgorithmChallenge({
                 disabled={isSubmitted}
                 className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                   showCorrect
-                    ? 'bg-green-500/10 border-green-500 text-green-400'
+                    ? 'bg-positive/10 border-positive text-positive'
                     : showWrong
-                    ? 'bg-red-500/10 border-red-500 text-red-400'
+                    ? 'bg-destructive/10 border-destructive text-destructive'
                     : isSelected
-                    ? 'bg-primary/10 border-primary text-primary'
-                    : 'bg-surface-container border-outline-variant/30 text-on-surface hover:border-primary/50'
+                    ? 'bg-accent/10 border-accent text-accent'
+                    : 'bg-surface border-line text-fg hover:border-accent/50'
                 } ${isSubmitted ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    showCorrect ? 'border-green-500 bg-green-500' :
-                    showWrong ? 'border-red-500 bg-red-500' :
-                    isSelected ? 'border-primary bg-primary' : 'border-outline-variant'
+                    showCorrect ? 'border-positive bg-positive' :
+                    showWrong ? 'border-destructive bg-destructive' :
+                    isSelected ? 'border-accent bg-accent' : 'border-line-strong'
                   }`}>
                     {(isSelected || showCorrect) && (
-                      <span className="material-symbols-outlined text-white text-sm">
-                        {showCorrect ? 'check' : showWrong ? 'close' : 'check'}
-                      </span>
+                      <Icon name={showCorrect ? 'check' : showWrong ? 'close' : 'check'} className="text-fg text-sm" />
                     )}
                   </div>
                   <span className="flex-1">{option}</span>
@@ -265,17 +260,15 @@ export default function AlgorithmChallenge({
       {/* Explanation (shown after submission) */}
       {isSubmitted && (
         <div className={`p-4 rounded-lg mb-6 ${
-          isCorrect ? 'bg-green-500/10 border border-green-500/30' : 'bg-yellow-500/10 border border-yellow-500/30'
+          isCorrect ? 'bg-positive/10 border border-positive/30' : 'bg-negative/10 border border-negative/30'
         }`}>
           <div className="flex gap-3">
-            <span className={`material-symbols-outlined ${isCorrect ? 'text-green-400' : 'text-yellow-400'}`}>
-              {isCorrect ? 'lightbulb' : 'info'}
-            </span>
+            <Icon name={isCorrect ? 'lightbulb' : 'info'} className={`${isCorrect ? 'text-positive' : 'text-negative'}`} />
             <div>
-              <p className="font-semibold text-on-surface mb-1">
+              <p className="font-semibold text-fg mb-1">
                 {isCorrect ? 'Correct!' : 'Explanation'}
               </p>
-              <p className="text-sm text-on-surface-variant">{currentQuestion.explanation}</p>
+              <p className="text-sm text-fg-2">{currentQuestion.explanation}</p>
             </div>
           </div>
         </div>
@@ -286,7 +279,7 @@ export default function AlgorithmChallenge({
         <button
           onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
           disabled={currentQuestionIndex === 0}
-          className="px-6 py-3 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-surface-2 hover:bg-surface-2 text-fg rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
         </button>
@@ -297,14 +290,14 @@ export default function AlgorithmChallenge({
           <button
             onClick={handleSubmitAnswer}
             disabled={!isAnswered}
-            className="px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-accent hover:bg-accent/90 text-accent-ink rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Submit Answer
           </button>
         ) : (
           <button
             onClick={handleNext}
-            className="px-6 py-3 bg-gradient-to-r from-primary to-tertiary hover:shadow-lg hover:shadow-primary/30 text-white rounded-lg transition-all font-semibold"
+            className="px-6 py-3 bg-gradient-to-r from-accent to-negative hover:shadow-lg hover:shadow-accent/30 text-fg rounded-lg transition-all font-semibold"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
           </button>

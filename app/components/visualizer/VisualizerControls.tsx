@@ -15,7 +15,10 @@ interface Props {
   onSpeedChange: (speed: number) => void;
 }
 
-const SPEEDS = [0.5, 1, 2];
+export const SPEEDS = [0.5, 1, 2];
+
+const iconButton =
+  'focusable flex h-10 w-10 items-center justify-center rounded-full border border-line text-fg transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-40';
 
 export default function VisualizerControls({
   isPlaying,
@@ -29,23 +32,25 @@ export default function VisualizerControls({
   onReset,
   onSpeedChange,
 }: Props) {
-  const progress = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
+  const shown = totalSteps > 0 ? currentStep + 1 : 0;
+  const progress = totalSteps > 0 ? (shown / totalSteps) * 100 : 0;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[rgba(31,41,55,0.8)] p-4">
-      <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
-        <span>
-          Step {totalSteps > 0 ? currentStep + 1 : 0} / {totalSteps}
+    <div className="surface rounded-[var(--r-lg)] p-4" role="group" aria-label="Playback controls">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="font-mono text-xs text-fg-2">
+          Step <span className="matrix-numeral text-fg">{shown}</span> / {totalSteps}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" role="group" aria-label="Playback speed">
           {SPEEDS.map((s) => (
             <button
               key={s}
+              type="button"
               onClick={() => onSpeedChange(s)}
-              className={`rounded-md px-2 py-1 text-[11px] transition ${
-                speed === s
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-400/30'
-                  : 'text-slate-400 hover:text-slate-200'
+              aria-pressed={speed === s}
+              aria-keyshortcuts={s === SPEEDS[0] ? '[' : s === SPEEDS[SPEEDS.length - 1] ? ']' : undefined}
+              className={`focusable rounded-full px-2.5 py-1 font-mono text-[11px] transition ${
+                speed === s ? 'bg-accent-soft text-fg shadow-[inset_0_0_0_1px_var(--accent)]' : 'text-fg-2 hover:text-fg'
               }`}
             >
               {s}x
@@ -54,39 +59,49 @@ export default function VisualizerControls({
         </div>
       </div>
 
-      <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-700/70">
-        <div
-          className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
+      <div
+        className="mb-4 h-1.5 overflow-hidden rounded-full bg-surface-2"
+        role="progressbar"
+        aria-label="Visualization progress"
+        aria-valuemin={0}
+        aria-valuemax={totalSteps}
+        aria-valuenow={shown}
+      >
+        <div className="h-full bg-accent transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
       <div className="flex items-center justify-center gap-3">
         <button
+          type="button"
           onClick={onPrevious}
           disabled={currentStep <= 0}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-slate-200 transition hover:border-cyan-400/30 disabled:opacity-40"
+          aria-label="Previous step"
+          aria-keyshortcuts="ArrowLeft"
+          className={iconButton}
         >
-          <SkipBack size={16} />
+          <SkipBack size={16} aria-hidden />
         </button>
         <button
+          type="button"
           onClick={isPlaying ? onPause : onPlay}
-          className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 transition hover:bg-cyan-500/30"
+          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-keyshortcuts="Space"
+          className="focusable flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-110"
         >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+          {isPlaying ? <Pause size={18} aria-hidden /> : <Play size={18} className="ml-0.5" aria-hidden />}
         </button>
         <button
+          type="button"
           onClick={onNext}
           disabled={currentStep >= totalSteps - 1}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-slate-200 transition hover:border-cyan-400/30 disabled:opacity-40"
+          aria-label="Next step"
+          aria-keyshortcuts="ArrowRight"
+          className={iconButton}
         >
-          <SkipForward size={16} />
+          <SkipForward size={16} aria-hidden />
         </button>
-        <button
-          onClick={onReset}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-slate-200 transition hover:border-cyan-400/30"
-        >
-          <RotateCcw size={16} />
+        <button type="button" onClick={onReset} aria-label="Reset" aria-keyshortcuts="R" className={iconButton}>
+          <RotateCcw size={16} aria-hidden />
         </button>
       </div>
     </div>

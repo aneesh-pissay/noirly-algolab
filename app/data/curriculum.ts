@@ -23,7 +23,6 @@ export interface Track {
   id: TrackId;
   title: string;
   description: string;
-  icon: string;
   topics: Record<Level, Topic[]>;
 }
 
@@ -43,7 +42,6 @@ export const tracks: Track[] = [
     id: 'data-structures',
     title: 'Data Structures',
     description: 'Master ways to organize and store data efficiently.',
-    icon: 'view_in_ar',
     topics: {
       Beginner: [
         {
@@ -440,7 +438,6 @@ export const tracks: Track[] = [
     id: 'algorithms',
     title: 'Algorithms',
     description: 'Sorting, searching, recursion, graphs, DP, and more.',
-    icon: 'deployed_code',
     topics: {
       Beginner: [
         {
@@ -669,7 +666,6 @@ export const tracks: Track[] = [
     id: 'patterns',
     title: 'Patterns',
     description: 'Reusable problem-solving patterns mapped to visual lessons.',
-    icon: 'polyline',
     topics: {
       Beginner: [
         {

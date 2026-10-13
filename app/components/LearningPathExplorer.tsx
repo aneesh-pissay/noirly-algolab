@@ -14,8 +14,6 @@ import {
   PlayCircle,
   Sparkles,
 } from 'lucide-react';
-import Sidebar from './Sidebar';
-import Header from './Header';
 import Breadcrumbs from './Breadcrumbs';
 import {
   tracks,
@@ -46,54 +44,57 @@ import {
   type LessonStatusType,
 } from '@/src/features/progress';
 
+import { TiltCard } from '@noirly-dev/ui/motion';
+import { iconFor } from '@/src/components/Icon';
+
 type View = 'tracks' | 'levels' | 'topics' | 'topic-detail';
 
 function statusIcon(status: LessonStatusType) {
   switch (status) {
     case 'completed':
-      return <CheckCircle2 size={14} className="text-emerald-300" />;
+      return <CheckCircle2 size={14} className="text-positive" aria-label="Completed" />;
     case 'current':
-      return <PlayCircle size={14} className="text-primary" />;
+      return <PlayCircle size={14} className="text-accent" aria-label="Current lesson" />;
     case 'locked':
-      return <Lock size={12} className="text-on-surface-variant/60" />;
+      return <Lock size={12} className="text-fg-3" aria-label="Locked" />;
     default:
-      return <div className="h-2 w-2 rounded-full bg-slate-400" />;
+      return <div className="h-2 w-2 rounded-full bg-fg-3" aria-hidden />;
   }
 }
 
 function LessonCard({ lesson, status }: { lesson: Lesson; status: LessonStatusType }) {
   const locked = status === 'locked';
 
-  const cardClass = `rounded-xl border p-4 transition ${
+  const cardClass = `surface grain rounded-[var(--r-lg)] p-4 transition ${
     status === 'completed'
-      ? 'border-emerald-400/30 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.08)]'
+      ? 'shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--positive)_45%,transparent)]'
       : status === 'current'
-      ? 'border-primary/50 bg-primary/10 glow-primary'
+      ? 'shadow-[inset_0_0_0_1px_var(--accent)]'
       : locked
-      ? 'border-outline-variant/30 bg-surface-container-high/50 opacity-60 cursor-not-allowed'
-      : 'border-outline-variant/30 bg-surface-container hover:border-primary/30 cursor-pointer'
+      ? 'opacity-60 cursor-not-allowed'
+      : 'surface-interactive'
   }`;
 
   const inner = (
     <>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="font-semibold text-on-surface">{lesson.name}</h4>
+          <h4 className="font-semibold text-fg">{lesson.name}</h4>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded-full border border-outline-variant/30 px-2 py-0.5 text-on-surface-variant">{lesson.difficulty}</span>
-            <span className="rounded-full border border-outline-variant/30 px-2 py-0.5 font-mono text-on-surface-variant">T {lesson.time}</span>
-            <span className="rounded-full border border-outline-variant/30 px-2 py-0.5 font-mono text-on-surface-variant">S {lesson.space}</span>
+            <span className="chip">{lesson.difficulty}</span>
+            <span className="chip" title="Time complexity">T {lesson.time}</span>
+            <span className="chip" title="Space complexity">S {lesson.space}</span>
           </div>
         </div>
         {statusIcon(status)}
       </div>
 
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs capitalize text-on-surface-variant">{status}</span>
+        <span className="text-xs capitalize text-fg-2">{status}</span>
         {locked ? (
-          <span className="text-xs text-on-surface-variant/60">Locked</span>
+          <span className="text-xs text-fg-3">Locked</span>
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-lg bg-primary/20 border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary">
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-3 py-1.5 font-mono text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-accent">
             {status === 'completed' ? 'Review' : 'Start'} <ArrowRight size={12} />
           </span>
         )}
@@ -106,7 +107,7 @@ function LessonCard({ lesson, status }: { lesson: Lesson; status: LessonStatusTy
   }
 
   return (
-    <Link href={`/visualizer/${lesson.algorithmId}`} className={`block ${cardClass} hover:scale-[1.01]`}>
+    <Link href={`/visualizer/${lesson.algorithmId}`} className={`focusable block ${cardClass}`}>
       {inner}
     </Link>
   );
@@ -117,8 +118,8 @@ function LessonRoadmap({ topic, trackId, level }: { topic: Topic; trackId: Track
   const flatLessons = difficulties.flatMap((d) => topic.lessons[d] ?? []);
 
   return (
-    <div className="rounded-xl border border-outline-variant/30 bg-surface-container/50 p-4">
-      <p className="mb-4 text-xs uppercase tracking-widest text-on-surface-variant">Lesson Flow</p>
+    <div className="surface-flat p-4">
+      <p className="mono-label mb-4">Lesson flow</p>
       <div className="space-y-1">
         {flatLessons.map((lesson, index) => {
           const status = getLessonStatus(lesson.id, progress);
@@ -127,19 +128,19 @@ function LessonRoadmap({ topic, trackId, level }: { topic: Topic; trackId: Track
               <div
                 className={`flex w-full max-w-xs items-center gap-3 rounded-lg border px-3 py-2.5 text-sm ${
                   status === 'completed'
-                    ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100'
+                    ? 'border-positive/30 bg-positive/10 text-positive'
                     : status === 'current'
-                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    ? 'border-accent/40 bg-accent/10 text-accent'
                     : status === 'locked'
-                    ? 'border-outline-variant/30 bg-surface-container-high/60 text-on-surface-variant/60'
-                    : 'border-outline-variant/30 bg-surface-container/70 text-slate-200'
+                    ? 'border-line bg-surface-2/60 text-fg-3'
+                    : 'border-line bg-surface/70 text-fg'
                 }`}
               >
                 {statusIcon(status)}
-                <span className="font-mono text-xs text-on-surface-variant/60">{String(index + 1).padStart(2, '0')}</span>
+                <span className="font-mono text-xs text-fg-3">{String(index + 1).padStart(2, '0')}</span>
                 <span className="flex-1">{lesson.name}</span>
               </div>
-              {index < flatLessons.length - 1 && <div className="h-4 w-px bg-primary/25" />}
+              {index < flatLessons.length - 1 && <div className="h-4 w-px bg-accent/25" />}
             </div>
           );
         })}
@@ -213,17 +214,16 @@ export default function LearningPathExplorer() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex flex-1 items-center justify-center p-10" role="status">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden />
+        <span className="sr-only">Loading your learning path</span>
       </div>
     );
   }
 
   return (
     <>
-      <Sidebar />
-      <Header />
-      <main className="app-main">
+      <div className="flex-1">
         <div className="mx-auto max-w-[1300px] space-y-6 p-4 sm:p-6 lg:p-8">
           <Breadcrumbs items={breadcrumbItems} />
 
@@ -232,16 +232,16 @@ export default function LearningPathExplorer() {
               {view !== 'tracks' && (
                 <button
                   onClick={goBack}
-                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-outline-variant/30 bg-surface-container-high text-on-surface-variant hover:border-primary/30"
+                  aria-label="Back"
+                  className="focusable flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
                 >
-                  <ArrowLeft size={16} />
+                  <ArrowLeft size={16} aria-hidden />
                 </button>
               )}
               <div>
-                <h1 className="font-display text-2xl font-extrabold text-on-surface sm:text-3xl lg:text-4xl">
-                  Learning <span className="text-primary">Path</span>
-                </h1>
-                <p className="text-sm text-on-surface-variant">
+                <p className="eyebrow mb-2">Curriculum</p>
+                <h1 className="page-title">Learning path</h1>
+                <p className="mt-1 text-sm text-fg-2">
                   Structured DSA curriculum — pick a track, topic, and lesson to visualize.
                 </p>
               </div>
@@ -264,27 +264,28 @@ export default function LearningPathExplorer() {
               {tracks.map((t) => {
                 const theory = getTrackTheory(t.id);
                 return (
+                <TiltCard key={t.id}>
                 <button
-                  key={t.id}
                   onClick={() => {
                     setActiveTrack(t.id);
                     setView('levels');
                   }}
-                  className="group cursor-pointer rounded-2xl border border-outline-variant/30 bg-surface-container p-6 text-left transition hover:border-primary/40 hover:glow-primary"
+                  className="surface surface-interactive spotlight grain focusable group h-full w-full rounded-[var(--r-lg)] p-6 text-left"
                 >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                    <span className="material-symbols-outlined">{t.icon}</span>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[var(--r-md)] bg-accent-soft text-accent">
+                    {(() => { const Glyph = iconFor(t.id); return <Glyph size={22} aria-hidden />; })()}
                   </div>
-                  <h2 className="text-xl font-bold text-on-surface group-hover:text-primary">{t.title}</h2>
-                  <p className="mt-2 text-sm text-on-surface-variant">{t.description}</p>
-                  <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-on-surface-variant/80">{theory.overview}</p>
+                  <h2 className="text-xl font-bold text-fg group-hover:text-accent">{t.title}</h2>
+                  <p className="mt-2 text-sm text-fg-2">{t.description}</p>
+                  <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-fg-3">{theory.overview}</p>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-on-surface-variant">{countTrackTopics(t.id)} topics</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-primary">
-                      Explore track <ArrowRight size={12} />
+                    <span className="text-xs text-fg-2">{countTrackTopics(t.id)} topics</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-accent">
+                      Explore track <ArrowRight size={12} aria-hidden />
                     </span>
                   </div>
                 </button>
+                </TiltCard>
               );
               })}
             </section>
@@ -312,18 +313,16 @@ export default function LearningPathExplorer() {
                         setActiveLevel(level);
                         setView('topics');
                       }}
-                      className={`rounded-2xl border p-5 text-left transition ${
-                        unlocked
-                          ? 'cursor-pointer border-outline-variant/30 bg-surface-container hover:border-primary/40'
-                          : 'cursor-not-allowed border-outline-variant/30 bg-surface-container-high/50 opacity-60'
+                      className={`surface grain focusable rounded-[var(--r-lg)] p-5 text-left ${
+                        unlocked ? 'surface-interactive' : 'cursor-not-allowed opacity-60'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-on-surface">{level}</h3>
-                        {unlocked ? <Layers size={16} className="text-primary" /> : <Lock size={14} className="text-on-surface-variant/60" />}
+                        <h3 className="text-lg font-semibold text-fg">{level}</h3>
+                        {unlocked ? <Layers size={16} className="text-accent" /> : <Lock size={14} className="text-fg-3" />}
                       </div>
-                      <p className="mt-2 text-sm text-on-surface-variant">{count} topics</p>
-                      <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-on-surface-variant/80">{levelInfo.overview}</p>
+                      <p className="mt-2 text-sm text-fg-2">{count} topics</p>
+                      <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-fg-3">{levelInfo.overview}</p>
                     </button>
                   );
                 })}
@@ -340,8 +339,8 @@ export default function LearningPathExplorer() {
                 tip={getLevelTheory(activeLevel).tip}
                 topicCount={topics.length}
               />
-              <p className="text-xs uppercase tracking-widest text-primary/70">
-                {track.title} · {activeLevel} — Select a topic
+              <p className="mono-label">
+                {track.title} · {activeLevel} — select a topic
               </p>
               <div className="space-y-2">
                 {topics.map((topic, index) => {
@@ -356,26 +355,24 @@ export default function LearningPathExplorer() {
                           setActiveTopic(topic);
                           setView('topic-detail');
                         }}
-                        className={`flex w-full items-center justify-between rounded-xl border px-5 py-4 text-left transition ${
-                          topicUnlocked
-                            ? 'cursor-pointer border-outline-variant/30 bg-surface-container hover:border-primary/40'
-                            : 'cursor-not-allowed border-outline-variant/30 bg-surface-container-high/50 opacity-60'
+                        className={`surface grain focusable flex w-full items-center justify-between rounded-[var(--r-lg)] px-5 py-4 text-left ${
+                          topicUnlocked ? 'surface-interactive' : 'cursor-not-allowed opacity-60'
                         }`}
                       >
                         <div className="flex-1 pr-4">
-                          <h3 className="font-semibold text-on-surface">{topic.name}</h3>
-                          <p className="mt-1 text-sm text-on-surface-variant">{topic.description}</p>
-                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-on-surface-variant/70">
+                          <h3 className="font-semibold text-fg">{topic.name}</h3>
+                          <p className="mt-1 text-sm text-fg-2">{topic.description}</p>
+                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-fg-3">
                             {getTopicTheory(topic.id, topic.name, topic.description).overview}
                           </p>
-                          <p className="mt-2 text-xs font-mono text-primary/70">
+                          <p className="mt-2 text-xs font-mono text-accent/70">
                             {topicProg.completed}/{topicProg.total} lessons
                           </p>
                         </div>
-                        {topicUnlocked ? <ArrowRight size={16} className="text-primary" /> : <Lock size={14} className="text-on-surface-variant/60" />}
+                        {topicUnlocked ? <ArrowRight size={16} className="text-accent" /> : <Lock size={14} className="text-fg-3" />}
                       </button>
                       {index < topics.length - 1 && (
-                        <div className="flex justify-center py-1 text-primary/40">↓</div>
+                        <div className="flex justify-center py-1 text-fg-3" aria-hidden>↓</div>
                       )}
                     </div>
                   );
@@ -389,23 +386,23 @@ export default function LearningPathExplorer() {
             const lessonCount = difficulties.reduce((n, d) => n + (activeTopic.lessons[d]?.length ?? 0), 0);
             return (
             <section className="space-y-6">
-              <div className="rounded-2xl border border-outline-variant/30 bg-surface-container p-6">
+              <div className="surface grain rounded-[var(--r-lg)] p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-primary/70">
+                    <p className="eyebrow">
                       {track.title} · {activeLevel}
                     </p>
-                    <h2 className="mt-1 text-3xl font-bold text-on-surface">{activeTopic.name}</h2>
-                    <p className="mt-2 max-w-2xl text-sm text-on-surface-variant">{activeTopic.description}</p>
+                    <h2 className="display-md mt-2">{activeTopic.name}</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-fg-2">{activeTopic.description}</p>
                   </div>
                   <div className="flex gap-2 text-xs">
-                    <span className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/30 px-3 py-2 text-on-surface-variant">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-fg-2">
                       <BookOpen size={14} /> {lessonCount} Lessons
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/30 px-3 py-2 text-on-surface-variant">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-fg-2">
                       <Clock3 size={14} /> Self-paced
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-primary">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-accent">
                       <Sparkles size={14} /> Visualizer
                     </span>
                   </div>
@@ -432,8 +429,8 @@ export default function LearningPathExplorer() {
                 return (
                   <div key={difficulty} className={`space-y-3 ${!tierUnlocked ? 'opacity-50' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold uppercase tracking-widest text-on-surface-variant">{difficulty}</h3>
-                      {!tierUnlocked && <Lock size={12} className="text-on-surface-variant/60" />}
+                      <h3 className="text-sm font-semibold uppercase tracking-widest text-fg-2">{difficulty}</h3>
+                      {!tierUnlocked && <Lock size={12} className="text-fg-3" />}
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
                       {lessons.map((lesson) => {
@@ -449,7 +446,7 @@ export default function LearningPathExplorer() {
             );
           })()}
         </div>
-      </main>
+      </div>
     </>
   );
 }

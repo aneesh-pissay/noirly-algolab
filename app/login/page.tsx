@@ -1,8 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { noirlyLogin } from './actions';
-import { loginErrorMessage } from './messages';
+import { AuthShell } from '@noirly-dev/ui';
+import { BrandMark } from '@/src/components/BrandMark';
+import { ThemeToggle } from '@/src/components/ThemeToggle';
+import { NoirlyLoginButton } from '@/app/components/NoirlyLoginButton';
 import { safeNextPath } from '@/src/server/auth/routes';
+import { loginErrorMessage } from './messages';
 
 export const metadata: Metadata = {
   title: 'Sign in · Noirly AlgoLab',
@@ -18,27 +21,37 @@ export default async function LoginPage({
   const message = loginErrorMessage(error);
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4">
-      <div className="flex w-full max-w-sm flex-col gap-6 text-center">
-        <h1 className="text-2xl font-semibold">Sign in to AlgoLab</h1>
-        <p className="text-sm opacity-75">
-          Email, Google and verification are handled by Noirly Identity. No separate password to remember.
-        </p>
-        {message ? (
-          <p role="alert" className="text-sm">
-            {message}
-          </p>
-        ) : null}
-        <form action={noirlyLogin}>
-          <input type="hidden" name="next" value={redirectTo} />
-          <button type="submit" className="w-full rounded-lg border px-4 py-3 font-semibold">
-            Noirly Login
-          </button>
-        </form>
-        <p className="text-sm opacity-75">
-          New here? <Link href="/">See what AlgoLab does</Link>
-        </p>
+    <div id="main" className="relative flex min-h-full flex-1 flex-col">
+      <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
+        <ThemeToggle size="sm" />
       </div>
-    </main>
+      <AuthShell
+        logo={<BrandMark className="size-14 md:size-16" />}
+        title="Sign in to AlgoLab"
+        lead="Email, Google and verification are handled by Noirly Identity. No separate password to remember."
+        footer={
+          <>
+            New here?{' '}
+            <Link href="/" className="text-[var(--accent)] hover:underline">
+              See what AlgoLab does
+            </Link>
+            {' · '}
+            <Link href="/privacy" className="text-[var(--accent)] hover:underline">
+              Privacy
+            </Link>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          {message ? (
+            <p role="alert" className="rounded-[var(--r-md)] bg-[var(--accent-soft)] p-3 text-sm text-[var(--text)]">
+              {message}
+            </p>
+          ) : null}
+          <NoirlyLoginButton next={redirectTo} />
+          <p className="meta text-center">You&apos;ll come back here after signing in</p>
+        </div>
+      </AuthShell>
+    </div>
   );
 }

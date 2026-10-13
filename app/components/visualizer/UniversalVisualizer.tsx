@@ -113,7 +113,7 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
 
   if (error) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10 p-6 text-red-200">
+      <div role="alert" className="surface flex h-64 items-center justify-center rounded-[var(--r-lg)] p-6 text-destructive">
         {error}
       </div>
     );
@@ -121,8 +121,9 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
 
   if (!algorithm || !state || !currentStep) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex h-64 items-center justify-center" role="status">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" aria-hidden />
+        <span className="sr-only">Loading lesson</span>
       </div>
     );
   }
@@ -154,26 +155,23 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <header className="rounded-xl border border-outline-variant/30 bg-surface-container p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-on-surface">{algorithm.name}</h1>
-            <p className="mt-1 text-sm text-on-surface-variant">{algorithm.description}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
-              {algorithm.category}
-            </span>
-            <span className="rounded-full border border-outline-variant/30 bg-surface-container-high px-3 py-1 text-xs text-on-surface-variant">
-              {difficulty}
-            </span>
-            <span className="rounded-full border border-outline-variant/30 bg-surface-container-high px-3 py-1 text-xs font-mono text-on-surface-variant">
-              T {algorithm.complexity.time}
-            </span>
-            <span className="rounded-full border border-outline-variant/30 bg-surface-container-high px-3 py-1 text-xs font-mono text-on-surface-variant">
-              S {algorithm.complexity.space}
-            </span>
-          </div>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="eyebrow mb-2">{lessonCtx ? `${lessonCtx.topic.name} · ${lessonCtx.level}` : algorithm.category}</p>
+          <h1 className="page-title">{lessonName}</h1>
+          <p className="mt-2 max-w-[60ch] text-sm text-fg-2">{algorithm.description}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="pill" data-tone="accent">
+            {algorithm.category}
+          </span>
+          <span className="pill">{difficulty}</span>
+          <span className="chip" title="Time complexity">
+            T {lessonCtx?.lesson.time ?? algorithm.complexity.time}
+          </span>
+          <span className="chip" title="Space complexity">
+            S {lessonCtx?.lesson.space ?? algorithm.complexity.space}
+          </span>
         </div>
       </header>
 
@@ -184,9 +182,9 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
       />
 
       {activeStep === 'visualize' && (
-        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[7fr_3fr]">
+        <div id="lesson-panel-visualize" role="tabpanel" aria-labelledby="lesson-tab-visualize" className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[7fr_3fr]">
           <section className="flex min-h-[420px] flex-col gap-4">
-            <div className="flex min-h-[420px] flex-1 items-stretch rounded-xl border border-outline-variant/30 bg-surface-container p-6">
+            <div className="surface flex min-h-[360px] flex-1 items-stretch overflow-x-auto rounded-[var(--r-lg)] p-4 sm:min-h-[420px] sm:p-6">
               <RendererFactory step={currentStep} />
             </div>
             <VisualizerControls
@@ -202,36 +200,32 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
               onSpeedChange={(s) => visualizerEngine.setSpeed(s)}
             />
             {atFinalStep && (
-              <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-on-surface-variant">
+              <div className="flex flex-col gap-3 rounded-[var(--r-lg)] bg-accent-soft px-4 py-3 shadow-[inset_0_0_0_1px_var(--hairline)] sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-fg">
                   Visualization complete — take the quiz to finish this lesson.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep('quiz')}
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/20 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/30 sm:w-auto"
-                >
-                  Go to Quiz <ArrowRight size={14} />
+                <button type="button" onClick={() => setActiveStep('quiz')} className="btn btn-solid btn-sm w-full sm:w-auto">
+                  Go to quiz <ArrowRight size={14} aria-hidden />
                 </button>
               </div>
             )}
             {!atFinalStep && (
-              <p className="text-center text-xs text-on-surface-variant">
+              <p className="text-center text-xs text-fg-2">
                 Step through to the final step to unlock the quiz
               </p>
             )}
             <CodePanel algorithmId={algorithmId} algorithm={algorithm} step={currentStep} />
           </section>
 
-          <aside className="min-h-[420px] rounded-xl border border-outline-variant/30 bg-surface-container p-4">
-            <p className="mb-3 text-xs uppercase tracking-widest text-on-surface-variant">Execution Details</p>
+          <aside aria-label="Execution details" className="surface min-h-[320px] rounded-[var(--r-lg)] p-4 lg:min-h-[420px]">
+            <p className="mono-label mb-3">Execution details</p>
             <ExecutionPanel algorithm={algorithm} step={currentStep} />
           </aside>
         </div>
       )}
 
       {activeStep === 'theory' && (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div id="lesson-panel-theory" role="tabpanel" aria-labelledby="lesson-tab-theory" className="min-h-0 flex-1 overflow-auto">
           <LessonTheoryView
             theory={theory}
             lessonName={lessonName}
@@ -242,7 +236,7 @@ export default function UniversalVisualizer({ algorithmId }: Props) {
       )}
 
       {activeStep === 'quiz' && (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div id="lesson-panel-quiz" role="tabpanel" aria-labelledby="lesson-tab-quiz" className="min-h-0 flex-1 overflow-auto">
           <LessonQuizView
             lessonName={lessonName}
             questions={quizQuestions}

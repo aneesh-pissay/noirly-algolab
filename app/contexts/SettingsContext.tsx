@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { applyAppearance, resolveTheme } from '@/lib/apply-appearance';
+import { applyAppearance, readStoredTheme, resolveTheme } from '@/lib/apply-appearance';
 import {
   DEFAULT_CLIENT_SETTINGS,
   type ClientSettings,
@@ -14,6 +14,7 @@ import {
 } from '@/lib/settings.types';
 import * as settingsAPI from '@/src/services/settings.service';
 import { useSession } from 'next-auth/react';
+import { trackSave } from '@/src/stores/saving';
 
 export type { ThemeMode, CodeLanguage, FontSize, ProfileVisibility, EmailNotifications };
 
@@ -32,7 +33,9 @@ interface SettingsContextValue extends ClientSettings {
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<ClientSettings>(DEFAULT_CLIENT_SETTINGS);
+  const [settings, setSettings] = useState<ClientSettings>(() =>
+    typeof window === 'undefined' ? DEFAULT_CLIENT_SETTINGS : { ...DEFAULT_CLIENT_SETTINGS, theme: readStoredTheme() },
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -44,11 +47,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const loadSeqRef = useRef(0);
   const saveSeqRef = useRef(0);
   // Signed-out visitors keep settings in memory only (nothing to save to).
+  // Assigned during render (not in an effect): SettingsSync, a child, calls
+  // loadSettings from its own effect, which runs before this provider's.
   const { status } = useSession();
   const signedInRef = useRef(false);
-  useEffect(() => {
-    signedInRef.current = status === 'authenticated';
-  }, [status]);
+  signedInRef.current = status === 'authenticated';
 
   useEffect(() => {
     applyAppearance(settings);
@@ -69,12 +72,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const resetSettings = useCallback(() => {
     loadSeqRef.current += 1;
     saveSeqRef.current += 1;
-    setSettings(DEFAULT_CLIENT_SETTINGS);
+    // Signed-out visitors keep the scheme they picked on this device.
+    const local = { ...DEFAULT_CLIENT_SETTINGS, theme: readStoredTheme() };
+    setSettings(local);
     setLoading(false);
     setSaving(false);
     setIsReady(true);
     setError(null);
-    applyAppearance(DEFAULT_CLIENT_SETTINGS);
+    applyAppearance(local);
   }, []);
 
   const loadSettings = useCallback(async () => {
@@ -126,7 +131,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const saved = await settingsAPI.updateUserSettings(patch);
+        const saved = await trackSave(settingsAPI.updateUserSettings(patch));
         if (saveSeq === saveSeqRef.current) {
           setSettings(saved);
           setError(null);

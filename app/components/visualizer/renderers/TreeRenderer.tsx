@@ -22,14 +22,13 @@ function renderLevelOrder(values: (number | null | string)[]) {
   return (
     <div className="flex flex-col items-center gap-6">
       {levels.map((level, li) => (
-        <div key={li} className="flex items-center gap-4">
+        <div key={li} className="flex items-center gap-2 sm:gap-4">
           {level.map((val, vi) => (
             <div
               key={`${li}-${vi}`}
-              className={`flex h-16 w-16 items-center justify-center rounded-full border text-base font-mono font-semibold ${
-                val == null
-                  ? 'border-transparent text-transparent'
-                  : 'border-primary/40 bg-primary/10 text-primary'
+              aria-hidden={val == null}
+              className={`flex h-12 w-12 items-center justify-center rounded-full font-mono text-base font-semibold sm:h-16 sm:w-16 ${
+                val == null ? 'text-transparent' : 'border border-line-strong bg-surface-2 text-fg'
               }`}
             >
               {val ?? '·'}
@@ -47,11 +46,11 @@ export default function TreeRenderer({ step }: Props) {
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-4 overflow-auto p-4">
-      <p className="text-xs uppercase tracking-widest text-cyan-300/70">Tree Visualization</p>
+      <p className="mono-label">Tree</p>
       {Array.isArray(tree) ? (
         renderLevelOrder(tree)
       ) : (
-        <pre className="max-w-full overflow-auto rounded-lg border border-white/10 bg-slate-900/60 p-4 text-xs text-slate-300">
+        <pre className="max-w-full overflow-auto rounded-[var(--r-md)] bg-bg p-4 text-xs text-fg shadow-[inset_0_0_0_1px_var(--hairline)]">
           {JSON.stringify(tree ?? data, null, 2)}
         </pre>
       )}

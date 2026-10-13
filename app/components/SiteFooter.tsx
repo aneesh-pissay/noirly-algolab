@@ -1,19 +1,23 @@
-import type { ReactNode } from 'react';
-import BrandMark from './BrandMark';
+import Link from 'next/link';
+import { BrandMark } from '@/src/components/BrandMark';
 
-interface SiteFooterProps {
-  children?: ReactNode;
-  className?: string;
-}
-
-export default function SiteFooter({ children, className = '' }: SiteFooterProps) {
+export default function SiteFooter() {
   return (
-    <footer
-      className={`border-t border-outline-variant/20 bg-surface-container/50 ${className}`.trim()}
-    >
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 text-center sm:flex-row sm:px-6 sm:py-8 sm:text-left">
-        <BrandMark variant="footer" href="/" />
-        {children}
+    <footer className="section-rule relative">
+      <div className="shell flex flex-wrap items-center justify-between gap-4 py-7">
+        <span className="flex items-center gap-4 text-[var(--text)]">
+          <BrandMark className="size-12 md:size-14" name="" />
+          <span className="display-md">Noirly AlgoLab</span>
+        </span>
+        <nav aria-label="Footer" className="flex flex-wrap items-center gap-4">
+          <span className="meta">Theory · Visualize · Quiz</span>
+          <Link href="/visual-lab" className="meta underline-offset-4 hover:text-[var(--text)] hover:underline">
+            Visual Lab
+          </Link>
+          <Link href="/privacy" className="meta underline-offset-4 hover:text-[var(--text)] hover:underline">
+            Privacy policy
+          </Link>
+        </nav>
       </div>
     </footer>
   );

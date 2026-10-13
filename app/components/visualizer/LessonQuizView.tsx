@@ -83,21 +83,21 @@ export default function LessonQuizView({
 
   if (showResults) {
     return (
-      <div className="flex h-full flex-col gap-6 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container p-6">
+      <div className="flex h-full flex-col gap-6 overflow-auto rounded-xl border border-line bg-surface p-6">
         <div className="text-center">
           <div
             className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-4 ${
-              passed ? 'border-emerald-400 bg-emerald-500/15' : 'border-red-400 bg-red-500/15'
+              passed ? 'border-positive bg-positive/15' : 'border-destructive bg-destructive/15'
             }`}
           >
-            {passed ? <CheckCircle2 size={40} className="text-emerald-400" /> : <XCircle size={40} className="text-red-400" />}
+            {passed ? <CheckCircle2 size={40} className="text-positive" /> : <XCircle size={40} className="text-destructive" />}
           </div>
-          <h2 className="text-2xl font-bold text-on-surface">{passed ? 'Quiz Passed!' : 'Keep Practicing'}</h2>
-          <p className="mt-1 text-on-surface-variant">
+          <h2 className="text-2xl font-bold text-fg">{passed ? 'Quiz Passed!' : 'Keep Practicing'}</h2>
+          <p className="mt-1 text-fg-2">
             {correctCount} / {questions.length} correct
           </p>
-          <p className="mt-2 text-4xl font-bold text-primary">{score}%</p>
-          <p className="mt-1 text-sm text-on-surface-variant">
+          <p className="mt-2 text-4xl font-bold text-accent">{score}%</p>
+          <p className="mt-1 text-sm text-fg-2">
             {passed
               ? lessonDone
                 ? 'Lesson complete — continue to the next lesson or return to the roadmap.'
@@ -114,14 +114,14 @@ export default function LessonQuizView({
               <div
                 key={q.id}
                 className={`rounded-lg border px-4 py-3 text-sm ${
-                  correct ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-red-400/30 bg-red-500/10'
+                  correct ? 'border-positive/30 bg-positive/10' : 'border-destructive/30 bg-destructive/10'
                 }`}
               >
-                <p className="font-medium text-on-surface">Q{i + 1}: {q.question}</p>
+                <p className="font-medium text-fg">Q{i + 1}: {q.question}</p>
                 {!correct && (
-                  <p className="mt-1 text-xs text-on-surface-variant">Correct: {q.options[q.correctAnswer]}</p>
+                  <p className="mt-1 text-xs text-fg-2">Correct: {q.options[q.correctAnswer]}</p>
                 )}
-                <p className="mt-1 text-xs text-on-surface-variant/80">{q.explanation}</p>
+                <p className="mt-1 text-xs text-fg-2">{q.explanation}</p>
               </div>
             );
           })}
@@ -132,7 +132,7 @@ export default function LessonQuizView({
             <button
               type="button"
               onClick={handleRetry}
-              className="flex-1 cursor-pointer rounded-lg border border-outline-variant/30 bg-surface-container-high px-4 py-3 text-sm font-medium text-on-surface transition hover:bg-surface-container-highest"
+              className="flex-1 cursor-pointer rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm font-medium text-fg transition hover:bg-surface-2"
             >
               Try Again
             </button>
@@ -142,7 +142,7 @@ export default function LessonQuizView({
               <button
                 type="button"
                 onClick={handleRetry}
-                className="flex-1 cursor-pointer rounded-lg border border-outline-variant/30 bg-surface-container-high px-4 py-3 text-sm font-medium text-on-surface transition hover:bg-surface-container-highest"
+                className="flex-1 cursor-pointer rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm font-medium text-fg transition hover:bg-surface-2"
               >
                 Try Again
               </button>
@@ -150,7 +150,7 @@ export default function LessonQuizView({
                 type="button"
                 onClick={handleCompleteClick}
                 disabled={isCompleting}
-                className="flex-1 cursor-pointer rounded-lg border border-primary/40 bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:bg-primary/90 disabled:opacity-50"
+                className="flex-1 cursor-pointer rounded-lg border border-accent/40 bg-accent px-4 py-3 text-sm font-semibold text-accent-ink transition hover:bg-accent/90 disabled:opacity-50"
               >
                 {isCompleting ? 'Saving...' : 'Complete Lesson'}
               </button>
@@ -159,7 +159,7 @@ export default function LessonQuizView({
           {passed && lessonDone && nextLesson && (
             <Link
               href={`/visualizer/${nextLesson.algorithmId}`}
-              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition hover:bg-primary/90"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-accent/40 bg-accent px-4 py-3 text-sm font-semibold text-accent-ink transition hover:bg-accent/90"
             >
               Next Lesson: {nextLesson.title} <ArrowRight size={14} />
             </Link>
@@ -167,7 +167,7 @@ export default function LessonQuizView({
           {passed && lessonDone && learnPathHref && (
             <Link
               href={learnPathHref}
-              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-outline-variant/30 bg-surface-container-high px-4 py-3 text-sm font-medium text-on-surface transition hover:bg-surface-container-highest"
+              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-surface-2 px-4 py-3 text-sm font-medium text-fg transition hover:bg-surface-2"
             >
               <Map size={14} /> Back to Roadmap
             </Link>
@@ -178,21 +178,21 @@ export default function LessonQuizView({
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-auto rounded-xl border border-outline-variant/30 bg-surface-container p-6">
+    <div className="flex h-full flex-col gap-4 overflow-auto rounded-xl border border-line bg-surface p-6">
       <div>
-        <h2 className="text-lg font-bold text-on-surface">{lessonName} — Quiz</h2>
-        <p className="text-sm text-on-surface-variant">
+        <h2 className="text-lg font-bold text-fg">{lessonName} — Quiz</h2>
+        <p className="text-sm text-fg-2">
           Question {currentIndex + 1} of {questions.length} · Pass with {PASS_SCORE}%+
         </p>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
           <div
-            className="h-full bg-primary transition-all"
+            className="h-full bg-accent transition-all"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
           />
         </div>
       </div>
 
-      <h3 className="text-base font-semibold text-on-surface">{current.question}</h3>
+      <h3 className="text-base font-semibold text-fg">{current.question}</h3>
 
       <div className="space-y-2">
         {current.options.map((option, index) => {
@@ -208,12 +208,12 @@ export default function LessonQuizView({
               disabled={submitted}
               className={`w-full cursor-pointer rounded-lg border-2 px-4 py-3 text-left text-sm transition ${
                 showCorrect
-                  ? 'border-emerald-400 bg-emerald-500/10 text-emerald-300'
+                  ? 'border-positive bg-positive/10 text-positive'
                   : showWrong
-                  ? 'border-red-400 bg-red-500/10 text-red-300'
+                  ? 'border-destructive bg-destructive/10 text-destructive'
                   : isSelected
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-outline-variant/30 bg-surface-container-high text-on-surface hover:border-primary/40'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-line bg-surface-2 text-fg hover:border-accent/40'
               } ${submitted ? 'cursor-default' : ''}`}
             >
               {option}
@@ -223,9 +223,9 @@ export default function LessonQuizView({
       </div>
 
       {submitted && (
-        <div className={`rounded-lg border px-4 py-3 text-sm ${isCorrect ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-tertiary/30 bg-tertiary/5'}`}>
-          <p className="font-medium text-on-surface">{isCorrect ? 'Correct!' : 'Explanation'}</p>
-          <p className="mt-1 text-on-surface-variant">{current.explanation}</p>
+        <div className={`rounded-lg border px-4 py-3 text-sm ${isCorrect ? 'border-positive/30 bg-positive/10' : 'border-negative/30 bg-negative/5'}`}>
+          <p className="font-medium text-fg">{isCorrect ? 'Correct!' : 'Explanation'}</p>
+          <p className="mt-1 text-fg-2">{current.explanation}</p>
         </div>
       )}
 
@@ -234,7 +234,7 @@ export default function LessonQuizView({
           type="button"
           onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
           disabled={currentIndex === 0}
-          className="cursor-pointer rounded-lg border border-outline-variant/30 px-4 py-2 text-sm text-on-surface disabled:cursor-not-allowed disabled:opacity-40"
+          className="cursor-pointer rounded-lg border border-line px-4 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-40"
         >
           Previous
         </button>
@@ -244,7 +244,7 @@ export default function LessonQuizView({
             type="button"
             onClick={handleSubmit}
             disabled={!isAnswered}
-            className="cursor-pointer rounded-lg bg-primary px-5 py-2 text-sm font-medium text-on-primary disabled:opacity-40"
+            className="cursor-pointer rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-ink disabled:opacity-40"
           >
             Submit
           </button>
@@ -252,7 +252,7 @@ export default function LessonQuizView({
           <button
             type="button"
             onClick={handleNext}
-            className="cursor-pointer rounded-lg bg-primary px-5 py-2 text-sm font-medium text-on-primary"
+            className="cursor-pointer rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-ink"
           >
             {currentIndex < questions.length - 1 ? 'Next' : 'See Results'}
           </button>

@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { AlgorithmStep } from '@/src/core/engine/types';
 import { getActionVariants } from './actionVariants';
+import { vizCellStyle, vizStateFor } from './vizState';
 
 interface Props {
   step: AlgorithmStep;
@@ -10,7 +11,7 @@ interface Props {
 
 export default function ArrayRenderer({ step }: Props) {
   const data = step.visualizationData ?? {};
-  const array: number[] = Array.isArray(data.array)
+  const array: (number | string)[] = Array.isArray(data.array)
     ? data.array
     : Array.isArray(data.nums)
     ? data.nums
@@ -20,51 +21,64 @@ export default function ArrayRenderer({ step }: Props) {
   const highlights = step.highlights ?? [];
   const variables = step.variables ?? {};
   const variants = getActionVariants(step.action);
+  const state = vizStateFor(step.action);
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-10">
-      <div className="flex items-end justify-center gap-4 flex-wrap px-6">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-6">
+      <ul aria-label="Array" className="flex flex-wrap items-end justify-center gap-2 px-2 sm:gap-4 sm:px-6">
         {array.map((value, index) => {
           const isHighlighted = highlights.includes(index);
-          const showI = variables.i === index;
-          const showJ = variables.j === index;
-          const showKey = variables.key === value && variables.i === index;
+          const pointers = [
+            variables.i === index ? 'i' : null,
+            variables.j === index ? 'j' : null,
+            variables.left === index ? 'L' : null,
+            variables.right === index ? 'R' : null,
+            variables.key === value && variables.i === index ? 'key' : null,
+          ].filter(Boolean) as string[];
 
           return (
-            <motion.div
+            <motion.li
               key={`${index}-${value}`}
               layout
               variants={variants}
               initial="initial"
               animate={isHighlighted ? 'animate' : 'initial'}
-              className="flex flex-col items-center gap-3"
+              className="flex flex-col items-center gap-2"
+              aria-label={`index ${index}, value ${value}${isHighlighted ? `, ${state.label}` : ''}${pointers.length ? `, pointer ${pointers.join(' ')}` : ''}`}
             >
-              {(showI || showJ || showKey) && (
-                <div className="flex gap-2 text-sm font-mono font-semibold text-primary">
-                  {showI && <span>i</span>}
-                  {showJ && <span>j</span>}
-                  {showKey && <span>key</span>}
-                </div>
-              )}
-              <motion.div
-                layout
-                className={`flex h-28 w-24 items-center justify-center rounded-2xl border-2 font-display text-3xl font-bold transition-colors ${
-                  isHighlighted
-                    ? 'border-primary bg-primary/15 text-primary shadow-[0_0_24px_rgba(56,189,248,0.4)]'
-                    : 'border-white/15 bg-[rgba(31,41,55,0.9)] text-slate-100'
+              <div className="flex h-5 gap-1.5 font-mono text-xs font-semibold text-accent" aria-hidden>
+                {pointers.map((p) => (
+                  <span key={p}>{p}</span>
+                ))}
+              </div>
+              <div
+                className={`relative flex h-16 w-12 items-center justify-center rounded-[var(--r-md)] font-display text-xl font-bold transition-colors sm:h-24 sm:w-20 sm:text-3xl ${
+                  isHighlighted ? '' : 'border border-line bg-surface-2 text-fg'
                 }`}
+                style={isHighlighted ? vizCellStyle(state) : undefined}
               >
                 {value}
-              </motion.div>
-              <span className="text-sm font-mono font-medium text-slate-400">{index}</span>
-            </motion.div>
+                {isHighlighted ? (
+                  <span aria-hidden className="absolute right-1 top-0.5 font-mono text-[10px] font-semibold" style={{ color: state.color }}>
+                    {state.symbol}
+                  </span>
+                ) : null}
+              </div>
+              <span className="font-mono text-xs text-fg-2" aria-hidden>
+                {index}
+              </span>
+            </motion.li>
           );
         })}
-      </div>
+      </ul>
 
-      {array.length === 0 && (
-        <p className="text-base text-slate-400">No array data in this step.</p>
-      )}
+      {highlights.length > 0 && array.length > 0 ? (
+        <p className="meta" aria-hidden>
+          <span style={{ color: state.color }}>{state.symbol}</span> {state.label}
+        </p>
+      ) : null}
+
+      {array.length === 0 && <p className="text-base text-fg-2">No array data in this step.</p>}
     </div>
   );
 }

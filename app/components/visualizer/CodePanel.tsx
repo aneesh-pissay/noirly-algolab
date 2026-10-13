@@ -20,22 +20,24 @@ export default function CodePanel({ algorithmId, algorithm, step }: Props) {
   const activeLineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    activeLineRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // `nearest` keeps the page itself still; only the code box scrolls.
+    activeLineRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
   }, [activeLine, step.id]);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-950/80 p-4">
+    <div className="surface rounded-[var(--r-lg)] p-4">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs uppercase tracking-widest text-slate-400">Code</p>
-        <span className="rounded-md border border-white/10 bg-slate-800 px-2 py-0.5 text-[10px] uppercase text-primary">
-          {codeLanguage}
-        </span>
+        <p className="mono-label">Code</p>
+        <span className="pill">{codeLanguage}</span>
       </div>
       <div
         ref={containerRef}
-        className="max-h-[280px] overflow-auto rounded-lg border border-white/5 bg-slate-900/60"
+        tabIndex={0}
+        aria-label={`${algorithm.name} code, line ${activeLine} highlighted`}
+        className="focusable max-h-[280px] overflow-auto rounded-[var(--r-md)] bg-bg shadow-[inset_0_0_0_1px_var(--hairline)]"
       >
-        <pre className="p-3 font-mono text-sm leading-7 text-slate-300">
+        <pre className="p-3 font-mono text-sm leading-7 text-fg">
           {lines.map((line, index) => {
             const lineNo = index + 1;
             const active = lineNo === activeLine;
@@ -44,19 +46,17 @@ export default function CodePanel({ algorithmId, algorithm, step }: Props) {
                 key={lineNo}
                 ref={active ? activeLineRef : undefined}
                 className={`flex gap-3 rounded px-2 -mx-2 transition-colors ${
-                  active
-                    ? 'bg-primary/20 border-l-[3px] border-primary shadow-[inset_0_0_0_1px_rgba(56,189,248,0.15)]'
-                    : 'border-l-[3px] border-transparent'
+                  active ? 'border-l-[3px] border-accent bg-accent-soft' : 'border-l-[3px] border-transparent'
                 }`}
               >
                 <span
                   className={`w-6 shrink-0 select-none text-right text-xs ${
-                    active ? 'text-primary font-semibold' : 'text-slate-600'
+                    active ? 'text-accent font-semibold' : 'text-fg-3'
                   }`}
                 >
                   {active ? '▶' : lineNo}
                 </span>
-                <code className={`whitespace-pre ${active ? 'text-primary font-medium' : ''}`}>
+                <code className={`whitespace-pre ${active ? 'font-medium text-fg' : ''}`}>
                   {line || ' '}
                 </code>
               </div>
@@ -64,8 +64,8 @@ export default function CodePanel({ algorithmId, algorithm, step }: Props) {
           })}
         </pre>
       </div>
-      <p className="mt-2 text-xs text-slate-500">
-        Executing line <span className="font-mono text-primary">{activeLine}</span> of{' '}
+      <p className="mt-2 text-xs text-fg-3">
+        Executing line <span className="font-mono text-accent">{activeLine}</span> of{' '}
         <span className="font-mono">{lines.length}</span>
       </p>
     </div>
