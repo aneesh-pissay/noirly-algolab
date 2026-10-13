@@ -34,26 +34,11 @@ export default function PublicHeader() {
   ) : (
     <>
       <Link
-        href="/auth/login"
+        href="/login"
         onClick={() => setMenuOpen(false)}
-        className={`cursor-pointer rounded-lg px-4 py-2.5 text-center text-sm font-medium transition ${
-          pathname === '/auth/login'
-            ? 'bg-primary/15 text-primary'
-            : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
-        }`}
+        className="cursor-pointer rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-center text-sm font-semibold text-primary transition hover:bg-primary/20"
       >
-        Log In
-      </Link>
-      <Link
-        href="/auth/register"
-        onClick={() => setMenuOpen(false)}
-        className={`cursor-pointer rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition ${
-          pathname === '/auth/register'
-            ? 'bg-primary text-on-primary'
-            : 'border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
-        }`}
-      >
-        Sign Up
+        Noirly Login
       </Link>
     </>
   );

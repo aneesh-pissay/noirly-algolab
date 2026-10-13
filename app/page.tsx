@@ -132,13 +132,13 @@ export default function LandingPage() {
                 ) : (
                   <>
                     <Link
-                      href="/auth/register"
+                      href="/login"
                       className="cursor-pointer rounded-lg bg-primary px-6 py-3 text-center font-display font-semibold text-on-primary transition hover:bg-primary/90"
                     >
                       Get Started Free
                     </Link>
                     <Link
-                      href="/auth/login"
+                      href="/login"
                       className="cursor-pointer rounded-lg border border-outline-variant/40 px-6 py-3 text-center font-display font-semibold text-on-surface transition hover:bg-surface-container-high"
                     >
                       Log In
@@ -308,13 +308,13 @@ export default function LandingPage() {
               ) : (
                 <>
                   <Link
-                    href="/auth/register"
+                    href="/login"
                     className="cursor-pointer rounded-lg bg-primary px-8 py-3 text-center font-display font-semibold text-on-primary transition hover:bg-primary/90"
                   >
                     Sign Up Free
                   </Link>
                   <Link
-                    href="/auth/login"
+                    href="/login"
                     className="cursor-pointer rounded-lg border border-outline-variant/40 px-8 py-3 text-center font-display font-semibold text-on-surface transition hover:bg-surface-container-high"
                   >
                     Log In
@@ -328,13 +328,13 @@ export default function LandingPage() {
         <SiteFooter>
           <div className="flex gap-4 text-sm">
             <Link
-              href="/auth/login"
+              href="/login"
               className="text-on-surface-variant transition hover:text-primary"
             >
               Log In
             </Link>
             <Link
-              href="/auth/register"
+              href="/login"
               className="text-on-surface-variant transition hover:text-primary"
             >
               Sign Up

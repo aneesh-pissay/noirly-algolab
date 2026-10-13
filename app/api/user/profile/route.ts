@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { requireUser } from '@/src/server/auth/session';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
 // GET /api/user/profile - Get user profile
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     await connectDB();
 
-    const user = await User.findById(decoded.userId).select('-password -verificationToken -verificationTokenExpiry -resetPasswordToken -resetPasswordExpiry');
+    const user = await User.findById(userId).select('-password -verificationToken -verificationTokenExpiry -resetPasswordToken -resetPasswordExpiry');
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -45,7 +35,8 @@ export async function GET(request: NextRequest) {
         updatedAt: user.updatedAt,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Get profile error:', error);
     return NextResponse.json({ error: 'Failed to get profile' }, { status: 500 });
   }
@@ -54,24 +45,14 @@ export async function GET(request: NextRequest) {
 // PATCH /api/user/profile - Update user profile
 export async function PATCH(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     const { firstName, lastName, avatar, bio } = await request.json();
 
     await connectDB();
 
     const user = await User.findByIdAndUpdate(
-      decoded.userId,
+      userId,
       {
         $set: {
           ...(firstName !== undefined && { firstName }),
@@ -106,7 +87,8 @@ export async function PATCH(request: NextRequest) {
         updatedAt: user.updatedAt,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Update profile error:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
   }

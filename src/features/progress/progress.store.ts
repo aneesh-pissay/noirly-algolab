@@ -31,12 +31,6 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
   reset: () => set({ progress: null, loading: false, error: null, isReady: false }),
 
   loadProgress: async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      set({ progress: null, loading: false, isReady: true, error: null });
-      return;
-    }
-
     set({ loading: true, error: null });
     try {
       const data = await progressAPI.getUserProgress();

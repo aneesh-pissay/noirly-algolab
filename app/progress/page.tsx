@@ -12,7 +12,7 @@ export default function ProgressPage() {
     { label: 'Lessons Completed', value: '—', icon: 'menu_book' },
     { label: 'Topics In Progress', value: '—', icon: 'timeline' },
     { label: 'Current Focus', value: 'Learning Path', icon: 'route' },
-    { label: 'Account', value: user?.username ?? '—', icon: 'person' },
+    { label: 'Account', value: user?.name ?? '—', icon: 'person' },
   ];
 
   return (

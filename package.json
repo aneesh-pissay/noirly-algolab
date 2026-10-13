@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@noirly-dev/ui": "npm:@aneesh-pissay/ui@0.3.1",
-    "@reduxjs/toolkit": "^2.12.0",
     "@tanstack/react-query": "^5.101.4",
     "bcryptjs": "^3.0.3",
     "cmdk": "^1.1.1",
@@ -35,7 +34,6 @@
     "nodemailer": "^8.0.10",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-redux": "^9.3.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.15"
   },

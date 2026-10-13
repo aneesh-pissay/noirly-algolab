@@ -60,7 +60,7 @@ export default function DashboardPage() {
 
           <section className="space-y-2">
             <h1 className="font-display text-2xl font-extrabold text-on-surface sm:text-3xl lg:text-4xl">
-              Welcome back, <span className="text-primary">{user?.firstName || user?.username || 'Coder'}</span>
+              Welcome back, <span className="text-primary">{user?.name.split(' ')[0] || 'Coder'}</span>
             </h1>
             <p className="text-on-surface-variant">Your DSA learning command center.</p>
           </section>

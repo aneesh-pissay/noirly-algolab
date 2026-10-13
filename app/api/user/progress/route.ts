@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { requireUser } from '@/src/server/auth/session';
 import connectDB from '@/lib/mongodb';
 import UserProgress from '@/models/UserProgress';
 import User from '@/models/User';
@@ -9,17 +9,7 @@ import { calculateNextStreak } from '@/lib/streak';
 // GET /api/user/progress - Get user learning progress
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     await connectDB();
 
@@ -27,14 +17,15 @@ export async function GET(request: NextRequest) {
     const levelId = searchParams.get('levelId');
     const topicSlug = searchParams.get('topicSlug');
 
-    let query: any = { userId: decoded.userId };
+    let query: any = { userId: userId };
     if (levelId) query.levelId = parseInt(levelId);
     if (topicSlug) query.topicSlug = topicSlug;
 
     const progress = await UserProgress.find(query).sort({ lastAccessedAt: -1 });
 
     return NextResponse.json({ progress });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Get progress error:', error);
     return NextResponse.json({ error: 'Failed to get progress' }, { status: 500 });
   }
@@ -43,17 +34,7 @@ export async function GET(request: NextRequest) {
 // POST /api/user/progress - Create or update progress
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     const { levelId, topicSlug, topicTitle, status, progress, timeSpent, score, notes, isBookmarked, xpGained } =
       await request.json();
@@ -67,10 +48,10 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const existingProgress = await UserProgress.findOne({ userId: decoded.userId, topicSlug });
+    const existingProgress = await UserProgress.findOne({ userId: userId, topicSlug });
 
     const updateData: any = {
-      userId: decoded.userId,
+      userId: userId,
       levelId,
       topicSlug,
       topicTitle,
@@ -91,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userProgress = await UserProgress.findOneAndUpdate(
-      { userId: decoded.userId, topicSlug },
+      { userId: userId, topicSlug },
       updateData,
       { new: true, upsert: true, runValidators: true }
     );
@@ -109,7 +90,7 @@ export async function POST(request: NextRequest) {
       awardedXp = clampXpGain(requestedXp);
 
       if (awardedXp > 0) {
-        const user = await User.findById(decoded.userId).select('xp currentLevel');
+        const user = await User.findById(userId).select('xp currentLevel');
 
         if (user) {
           const nextXp = (user.xp || 0) + awardedXp;
@@ -118,7 +99,7 @@ export async function POST(request: NextRequest) {
           leveledUp = nextLevel > (user.currentLevel || 1);
           currentLevel = nextLevel;
 
-          await User.findByIdAndUpdate(decoded.userId, {
+          await User.findByIdAndUpdate(userId, {
             xp: nextXp,
             currentLevel: nextLevel,
             streak: streakResult.streak,
@@ -135,7 +116,8 @@ export async function POST(request: NextRequest) {
       leveledUp,
       currentLevel,
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Update progress error:', error);
     return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 });
   }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiFetch } from '@/src/lib/api-client';
 
 interface ChallengeQuestion {
   id: string;
@@ -70,13 +71,8 @@ export default function AlgorithmChallenge({
     
     setIsCompleting(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/user/progress', {
+      const response = await apiFetch('/api/user/progress', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({
           levelId,
           topicSlug: algorithmId,

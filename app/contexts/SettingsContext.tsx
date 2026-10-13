@@ -13,6 +13,7 @@ import {
   type ThemeMode,
 } from '@/lib/settings.types';
 import * as settingsAPI from '@/src/services/settings.service';
+import { useSession } from 'next-auth/react';
 
 export type { ThemeMode, CodeLanguage, FontSize, ProfileVisibility, EmailNotifications };
 
@@ -42,6 +43,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   settingsRef.current = settings;
   const loadSeqRef = useRef(0);
   const saveSeqRef = useRef(0);
+  // Signed-out visitors keep settings in memory only (nothing to save to).
+  const { status } = useSession();
+  const signedInRef = useRef(false);
+  useEffect(() => {
+    signedInRef.current = status === 'authenticated';
+  }, [status]);
 
   useEffect(() => {
     applyAppearance(settings);
@@ -71,8 +78,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadSettings = useCallback(async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
+    if (!signedInRef.current) {
       resetSettings();
       return;
     }
@@ -112,8 +118,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSaving(true);
     setError(null);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
+    if (!signedInRef.current) {
       saveSeqRef.current = 0;
       setSaving(false);
       return;

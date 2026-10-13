@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { identityAccountUrl, useAuth } from '../contexts/AuthContext';
 import { useMobileNav } from '../contexts/MobileNavContext';
 import ThemeToggle from './ThemeToggle';
 
@@ -40,8 +40,7 @@ export default function Header() {
       .slice(0, 2);
   };
 
-  const displayName =
-    user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username;
+  const displayName = user.name;
 
   return (
     <header className="app-header z-50 flex h-16 items-center gap-3 border-b border-outline-variant/40 bg-background px-4 sm:px-6">
@@ -63,9 +62,9 @@ export default function Header() {
             aria-label="Account menu"
             className="group flex cursor-pointer items-center gap-2 rounded-lg p-1.5 transition-all hover:bg-surface-container-high sm:gap-3 sm:px-2 sm:py-2"
           >
-            {user.avatar ? (
+            {user.image ? (
               <img
-                src={user.avatar}
+                src={user.image}
                 alt={displayName}
                 className="h-9 w-9 rounded-full border-2 border-primary/30 object-cover"
               />
@@ -93,9 +92,9 @@ export default function Header() {
             <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container shadow-2xl">
               <div className="border-b border-outline-variant/20 bg-gradient-to-br from-primary/10 to-tertiary/10 p-4">
                 <div className="flex items-center gap-3">
-                  {user.avatar ? (
+                  {user.image ? (
                     <img
-                      src={user.avatar}
+                      src={user.image}
                       alt={displayName}
                       className="h-12 w-12 rounded-full border-2 border-primary/50 object-cover"
                     />
@@ -112,6 +111,13 @@ export default function Header() {
               </div>
 
               <div className="py-2">
+                <a
+                  href={identityAccountUrl()}
+                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-on-surface transition-colors hover:bg-surface-container-high"
+                >
+                  <span className="material-symbols-outlined text-sm">manage_accounts</span>
+                  <span className="text-sm font-medium">Manage account</span>
+                </a>
                 <button
                   onClick={handleLogout}
                   className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-red-500 transition-colors hover:bg-red-500/10"
@@ -119,16 +125,6 @@ export default function Header() {
                   <span className="material-symbols-outlined text-sm">logout</span>
                   <span className="text-sm font-medium">Sign Out</span>
                 </button>
-              </div>
-
-              <div className="border-t border-outline-variant/20 bg-surface-dim/50 px-4 py-2">
-                <p className="text-xs text-on-surface-variant">
-                  Member since{' '}
-                  {new Date(user.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
               </div>
             </div>
           )}

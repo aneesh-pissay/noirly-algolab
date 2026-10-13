@@ -1,121 +1,51 @@
 'use client';
 
-import React, { createContext, useContext, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setUser, logout as logoutAction, setLoading } from '../store/authSlice';
+import { SessionProvider, signOut, useSession } from 'next-auth/react';
+import type { ReactNode } from 'react';
 
-interface AuthContextType {
-  logout: () => void;
-  refreshUser: () => Promise<void>;
+/**
+ * Sessions come from Noirly Identity via Auth.js (httpOnly cookie). Route
+ * protection lives in proxy.ts; this is only the client view of the session.
+ */
+export function AuthProvider({ children }: { children: ReactNode }) {
+  return <SessionProvider>{children}</SessionProvider>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const publicRoutes = [
-  '/',
-  '/auth/login',
-  '/auth/register',
-  '/auth/verify-email',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-];
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const dispatch = useAppDispatch();
-  const { token, isAuthenticated } = useAppSelector((state) => state.auth);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const fetchUser = async () => {
-    const storedToken = localStorage.getItem('token');
-    
-    if (!storedToken) {
-      console.log('[AuthContext] No token found');
-      dispatch(setLoading(false));
-      
-      // Only redirect if trying to access a protected route
-      if (!publicRoutes.includes(pathname)) {
-        console.log('[AuthContext] Not authenticated, redirecting to login');
-        router.replace(`/auth/login?redirect=${pathname}`);
-      }
-      return;
-    }
-
-    try {
-      console.log('[AuthContext] Fetching user with token...');
-      const response = await fetch('/api/auth/me', {
-        cache: 'no-store',
-        headers: {
-          'Authorization': `Bearer ${storedToken}`,
-        },
-      });
-      
-      console.log('[AuthContext] /api/auth/me response:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[AuthContext] User fetched:', data.user);
-        dispatch(setUser(data.user));
-
-        if (pathname === '/auth/login' || pathname === '/auth/register') {
-          console.log('[AuthContext] Authenticated user on auth page, redirecting to /learn-path');
-          router.replace('/learn-path');
-        }
-      } else {
-        const data = await response.json().catch(() => ({}));
-        const isUnverified = response.status === 403;
-        console.log('[AuthContext] Auth failed, clearing session...', response.status);
-        localStorage.removeItem('token');
-        dispatch(logoutAction());
-
-        if (!publicRoutes.includes(pathname)) {
-          const redirect = isUnverified
-            ? `/auth/login?error=verify-email&redirect=${encodeURIComponent(pathname)}`
-            : `/auth/login?redirect=${pathname}`;
-          router.replace(redirect);
-        }
-      }
-    } catch (error) {
-      console.error('[AuthContext] Failed to fetch user:', error);
-      localStorage.removeItem('token');
-      dispatch(logoutAction());
-    }
-  };
-
-  const logout = () => {
-    console.log('[AuthContext] Logging out...');
-    dispatch(logoutAction());
-    router.replace('/');
-  };
-
-  const refreshUser = async () => {
-    await fetchUser();
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, [pathname]);
-
-  return (
-    <AuthContext.Provider value={{ logout, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  );
+export interface AuthUser {
+  /** AlgoLab's MongoDB user id. */
+  id: string;
+  identitySub: string;
+  name: string;
+  email: string;
+  image: string | null;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  const { user, loading, isAuthenticated } = useAppSelector((state) => state.auth);
-  
+  const { data, status, update } = useSession();
+  const sessionUser = data?.user;
+  const user: AuthUser | null = sessionUser?.id
+    ? {
+        id: sessionUser.id,
+        identitySub: sessionUser.identitySub,
+        name: sessionUser.name || sessionUser.email?.split('@')[0] || 'Learner',
+        email: sessionUser.email ?? '',
+        image: sessionUser.image ?? null,
+      }
+    : null;
+
   return {
     user,
-    loading,
-    isAuthenticated,
-    ...context,
+    loading: status === 'loading',
+    isAuthenticated: status === 'authenticated' && Boolean(user),
+    /** Ends the session; the `signOut` event revokes its `sid` server-side. */
+    logout: () => signOut({ redirectTo: '/login' }),
+    refreshUser: async () => {
+      await update();
+    },
   };
+}
+
+export function identityAccountUrl(): string {
+  const base = (process.env.NEXT_PUBLIC_IDENTITY_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+  return `${base}/account`;
 }

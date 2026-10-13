@@ -1,45 +1,20 @@
 import type { ClientSettings, ClientSettingsPatch } from '@/lib/settings.types';
-
-function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiJson } from '@/src/lib/api-client';
 
 interface SettingsApiResponse {
   settings: ClientSettings;
 }
 
 export async function getUserSettings(): Promise<ClientSettings> {
-  const response = await fetch('/api/user/settings', {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Failed to load settings');
-  }
-
-  const data: SettingsApiResponse = await response.json();
+  const data = await apiJson<SettingsApiResponse>('/api/user/settings', {}, 'Failed to load settings');
   return data.settings;
 }
 
 export async function updateUserSettings(patch: ClientSettingsPatch): Promise<ClientSettings> {
-  const response = await fetch('/api/user/settings', {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(patch),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Failed to update settings');
-  }
-
-  const data: SettingsApiResponse = await response.json();
+  const data = await apiJson<SettingsApiResponse>(
+    '/api/user/settings',
+    { method: 'PATCH', body: JSON.stringify(patch) },
+    'Failed to update settings',
+  );
   return data.settings;
 }
