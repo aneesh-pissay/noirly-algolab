@@ -20,9 +20,14 @@ export default function CodePanel({ algorithmId, algorithm, step }: Props) {
   const activeLineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Scroll the code box only. scrollIntoView would also scroll the page
+    // (and the shell's content pane), pulling the visualizer out of view.
+    const container = containerRef.current;
+    const line = activeLineRef.current;
+    if (!container || !line) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // `nearest` keeps the page itself still; only the code box scrolls.
-    activeLineRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    const top = line.offsetTop - container.clientHeight / 2 + line.clientHeight / 2;
+    container.scrollTo({ top: Math.max(0, top), behavior: reduce ? 'auto' : 'smooth' });
   }, [activeLine, step.id]);
 
   return (
@@ -35,7 +40,7 @@ export default function CodePanel({ algorithmId, algorithm, step }: Props) {
         ref={containerRef}
         tabIndex={0}
         aria-label={`${algorithm.name} code, line ${activeLine} highlighted`}
-        className="focusable max-h-[280px] overflow-auto rounded-[var(--r-md)] bg-bg shadow-[inset_0_0_0_1px_var(--hairline)]"
+        className="focusable relative max-h-[280px] overflow-auto rounded-[var(--r-md)] bg-bg shadow-[inset_0_0_0_1px_var(--hairline)]"
       >
         <pre className="p-3 font-mono text-sm leading-7 text-fg">
           {lines.map((line, index) => {

@@ -88,16 +88,16 @@ export default function LessonTheoryView({ theory, lessonName, onContinue, theor
         </div>
       </div>
 
-      <div className="mt-auto flex items-center justify-between rounded-xl border border-line bg-surface-2 px-5 py-4">
+      <div className="surface mt-auto flex flex-wrap items-center justify-between gap-3 rounded-[var(--r-lg)] px-5 py-4">
         <p className="text-sm text-fg-2">
           {theoryViewed ? 'Theory reviewed — proceed to the visualizer.' : 'Read through the theory, then continue.'}
         </p>
         <button
           type="button"
           onClick={onContinue}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-accent/40 bg-accent/15 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/25"
+          className="btn btn-solid btn-sm"
         >
-          Continue to Visualize <ArrowRight size={14} />
+          Continue to visualize <ArrowRight size={14} aria-hidden />
         </button>
       </div>
     </div>

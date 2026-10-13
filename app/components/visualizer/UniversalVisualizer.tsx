@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowRight, Link2 } from 'lucide-react';
 import { visualizerEngine } from '@/src/core/engine/VisualizerEngine';
 import { Algorithm, AlgorithmStep, VisualizerState } from '@/src/core/engine/types';
 import { bootstrapVisualizerEngine } from '@/app/lib/engineBootstrap';
@@ -15,12 +15,28 @@ import ExecutionPanel from './ExecutionPanel';
 import CodePanel from './CodePanel';
 import VisualizerControls from './VisualizerControls';
 import CompletionModal from './CompletionModal';
-import LessonStepBar, { type LessonStep } from './LessonStepBar';
+import LessonStepBar, { canAccessStep, type LessonStep } from './LessonStepBar';
+import InputPanel from './InputPanel';
+import { SPEEDS } from './VisualizerControls';
+import {
+  decodeInput,
+  detectInputSpec,
+  parseStepParam,
+  shareUrl,
+  tryRun,
+  type LessonInput,
+} from '@/app/lib/lessonInput';
+import { useUIStore } from '@/src/stores/ui';
 import LessonTheoryView from './LessonTheoryView';
 import LessonQuizView from './LessonQuizView';
 
 interface Props {
   lessonId: string;
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  return el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.tagName === 'SELECT' || Boolean(el?.isContentEditable);
 }
 
 export default function UniversalVisualizer({ lessonId }: Props) {
@@ -34,6 +50,9 @@ export default function UniversalVisualizer({ lessonId }: Props) {
   const [activeStep, setActiveStep] = useState<LessonStep>('theory');
   const [stepProgress, setStepProgress] = useState({ visualize: false, theory: false, quiz: false });
   const [isCompleting, setIsCompleting] = useState(false);
+  const [customInput, setCustomInput] = useState<LessonInput | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   const setCurrentLesson = useProgressStore((s) => s.setCurrentLesson);
   const completeLesson = useProgressStore((s) => s.completeLesson);
@@ -61,12 +80,23 @@ export default function UniversalVisualizer({ lessonId }: Props) {
     setAlgorithm(algo);
     setError(null);
 
+    // A shared link (?input=…&step=…) opens on exactly that state (spec F6).
+    const params = new URLSearchParams(window.location.search);
+    const shared = decodeInput(params.get('input'));
+    const sharedInput = shared && tryRun(algo, shared) ? shared : null;
     try {
-      visualizerEngine.execute(algorithmId, {});
+      visualizerEngine.execute(algorithmId, sharedInput ?? {});
       visualizerEngine.setSpeed(animationSpeed);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to execute algorithm');
       return;
+    }
+    setCustomInput(sharedInput);
+    const sharedStep = parseStepParam(params.get('step'), visualizerEngine.getState().totalSteps);
+    if (sharedStep !== null || sharedInput) {
+      if (sharedStep !== null) visualizerEngine.goToStep(sharedStep);
+      setStepProgress((prev) => ({ ...prev, theory: true }));
+      setActiveStep('visualize');
     }
 
     const unsubscribe = visualizerEngine.subscribe((newState) => {
@@ -93,6 +123,86 @@ export default function UniversalVisualizer({ lessonId }: Props) {
       setStepProgress((prev) => ({ ...prev, visualize: true }));
     }
   }, [atFinalStep]);
+
+  const inputSpec = useMemo(() => (algorithm ? detectInputSpec(algorithmId, algorithm) : null), [algorithmId, algorithm]);
+
+  const runWith = useCallback(
+    (input: LessonInput | null) => {
+      if (!algorithm) return;
+      if (input && !tryRun(algorithm, input)) {
+        setInputError('This visualizer cannot run on that input. Try a smaller or different one.');
+        return;
+      }
+      visualizerEngine.pause();
+      visualizerEngine.execute(algorithmId, input ?? {});
+      setCustomInput(input);
+      setInputError(null);
+      setShareStatus(null);
+    },
+    [algorithm, algorithmId],
+  );
+
+  const share = useCallback(async () => {
+    const url = shareUrl(window.location.href, customInput, visualizerEngine.getState().currentStep);
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareStatus('Link copied — it opens this lesson at this step with this input.');
+    } catch {
+      setShareStatus(url);
+    }
+  }, [customInput]);
+
+  // Keyboard controls (spec F4). Ignored while typing, with modifier keys,
+  // or while the command palette or a dialog is open.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target) || useUIStore.getState().commandPaletteOpen) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      const target = event.target as HTMLElement | null;
+      const onControl = target?.closest('button, a, [role="tab"]');
+
+      const tab = ({ '1': 'theory', '2': 'visualize', '3': 'quiz' } as const)[event.key as '1' | '2' | '3'];
+      if (tab) {
+        if (canAccessStep(tab, stepProgress)) setActiveStep(tab);
+        return;
+      }
+      if (activeStep !== 'visualize') return;
+
+      const engineState = visualizerEngine.getState();
+      switch (event.key) {
+        case ' ':
+          if (onControl) return; // Space already activates the focused control.
+          event.preventDefault();
+          if (engineState.isPlaying) visualizerEngine.pause();
+          else visualizerEngine.play();
+          break;
+        case 'ArrowLeft':
+          if (target?.closest('[role="tab"]')) return;
+          event.preventDefault();
+          visualizerEngine.previousStep();
+          break;
+        case 'ArrowRight':
+          if (target?.closest('[role="tab"]')) return;
+          event.preventDefault();
+          visualizerEngine.nextStep();
+          break;
+        case 'r':
+        case 'R':
+          visualizerEngine.reset();
+          break;
+        case '[':
+        case ']': {
+          const index = SPEEDS.indexOf(engineState.speed);
+          const next = SPEEDS[Math.max(0, Math.min(SPEEDS.length - 1, (index < 0 ? 1 : index) + (event.key === ']' ? 1 : -1)))];
+          visualizerEngine.setSpeed(next);
+          break;
+        }
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeStep, stepProgress]);
 
   const lessonMeta = getLessonMeta(lessonId);
   const nextLesson = lessonMeta?.next ? getLessonMeta(lessonMeta.next) : null;
@@ -177,7 +287,18 @@ export default function UniversalVisualizer({ lessonId }: Props) {
 
       {activeStep === 'visualize' && (
         <div id="lesson-panel-visualize" role="tabpanel" aria-labelledby="lesson-tab-visualize" className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[7fr_3fr]">
-          <section className="flex min-h-[420px] flex-col gap-4">
+          <section className="flex min-w-0 flex-col gap-4">
+            {inputSpec ? (
+              <InputPanel
+                key={customInput ? 'custom' : 'example'}
+                spec={inputSpec}
+                current={customInput}
+                error={inputError}
+                onRun={runWith}
+                onShare={() => void share()}
+                shareStatus={shareStatus}
+              />
+            ) : null}
             <div className="surface flex min-h-[360px] flex-1 items-stretch overflow-x-auto rounded-[var(--r-lg)] p-4 sm:min-h-[420px] sm:p-6">
               <RendererFactory step={currentStep} />
             </div>
@@ -208,6 +329,21 @@ export default function UniversalVisualizer({ lessonId }: Props) {
                 Step through to the final step to unlock the quiz
               </p>
             )}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="meta hidden sm:block" id="visualizer-shortcuts">
+                Space play/pause · ←/→ step · R reset · [ ] speed · 1/2/3 tabs · / search
+              </p>
+              {!inputSpec ? (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => void share()}>
+                  <Link2 size={13} aria-hidden /> Share this step
+                </button>
+              ) : null}
+            </div>
+            {!inputSpec && shareStatus ? (
+              <p role="status" className="text-xs text-fg-2">
+                {shareStatus}
+              </p>
+            ) : null}
             <CodePanel algorithmId={algorithmId} algorithm={algorithm} step={currentStep} />
           </section>
 
