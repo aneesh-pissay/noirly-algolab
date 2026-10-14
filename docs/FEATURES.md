@@ -11,8 +11,12 @@ the older status notes (`docs/SORTING_STATUS.md`, the counts in the previous
   Patterns 32), three levels and three difficulty tiers each.
 - **Lesson flow**: Theory → Visualize → Quiz. The quiz unlocks after stepping to
   the final frame of the visualization (or if the lesson is already complete).
-- **Unlocking**: lessons unlock in order; the server refuses to complete a locked
-  lesson.
+- **Staged path**: Beginner topics of all three tracks come first, then
+  Intermediate, then Advanced. A topic's Easy and Medium lessons are its core:
+  finishing them opens the next topic (Hard stays open as a challenge), and a
+  stage opens once the previous stage's core is done in every track. The
+  learning path page and Progress show the stages; the server refuses to
+  complete a locked lesson.
 - **Visualizer**: every lesson runs on the shared engine (`src/core`), with array,
   stack, queue, tree, graph and generic renderers, a synced code panel and an
   execution panel (action, explanation, variables, memory, complexity).

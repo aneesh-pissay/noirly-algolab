@@ -65,3 +65,17 @@ test('the header offers palettes like Noirly Flow, without a search box or app s
   // The sidebar search and Ctrl K still open the command palette.
   await expect(page.getByRole('button', { name: 'Search lessons' })).toBeVisible();
 });
+
+test('the learning path is staged: Beginner in every track first', async ({ page }) => {
+  await page.goto('/learn-path');
+  const beginner = page.getByRole('listitem', { name: 'Stage 1: Beginner' });
+  const intermediate = page.getByRole('listitem', { name: 'Stage 2: Intermediate' });
+  await expect(beginner.getByText('Current stage')).toBeVisible();
+  await expect(intermediate.getByText('Unlocks after Beginner')).toBeVisible();
+  // Beginner topics of all three tracks are on the same stage.
+  for (const topic of ['Arrays', 'Sorting', 'Two Pointers']) await expect(beginner.getByText(topic, { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Full path' })).toHaveAttribute('aria-current', 'page');
+  await page.goto('/learn-path?track=algorithms');
+  await expect(page.getByRole('button', { name: /^Intermediate/ })).toBeDisabled();
+  await expect(page.getByText('Opens after the Beginner core in all three tracks').first()).toBeVisible();
+});

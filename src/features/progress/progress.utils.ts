@@ -207,9 +207,52 @@ function getNextLevelFirstLesson(track: Track, currentLevel: Level): LessonMeta 
   return first ? getLessonMeta(first.id) : null;
 }
 
-function isTopicComplete(track: Track, level: Level, topicId: string, completed: string[]): boolean {
-  const lessons = getTopicLessons(track, level, topicId);
+/**
+ * A topic's core: its Easy and Medium lessons. Finishing the core opens the
+ * next topic; the Hard tier stays open as a challenge. Several Beginner
+ * topics end in advanced problems (KMP, Manacher, LFU Cache, N-Queens), so
+ * requiring them before the next topic or stage would block the path.
+ */
+export const CORE_DIFFICULTIES = ['Easy', 'Medium'] as const;
+
+function topicCoreLessons(topic: Topic): Lesson[] {
+  return CORE_DIFFICULTIES.flatMap((d) => topic.lessons[d] ?? []);
+}
+
+function isTopicCoreComplete(track: Track, level: Level, topicId: string, completed: string[]): boolean {
+  const topic = track.topics[level]?.find((t) => t.id === topicId);
+  const lessons = topic ? topicCoreLessons(topic) : [];
   return lessons.length > 0 && lessons.every((l) => completed.includes(l.id));
+}
+
+/** Core lessons of one level across every track (a "stage" of the path). */
+export function getStageCoreLessons(level: Level): Lesson[] {
+  return tracks.flatMap((track) => (track.topics[level] ?? []).flatMap(topicCoreLessons));
+}
+
+export function getStageProgress(level: Level, completedLessons: string[]): { done: number; total: number } {
+  const done = new Set(completedLessons);
+  const lessons = getStageCoreLessons(level);
+  return { done: lessons.filter((l) => done.has(l.id)).length, total: lessons.length };
+}
+
+function isStageCoreComplete(level: Level, completed: string[]): boolean {
+  const { done, total } = getStageProgress(level, completed);
+  return total > 0 && done === total;
+}
+
+/**
+ * The path is staged: every track's Beginner core comes before any
+ * Intermediate topic, and every Intermediate core before Advanced.
+ * Learners who unlocked a later level under the old per-track rule keep it.
+ */
+export function isStageUnlocked(level: Level, progress: Pick<UserProgress, 'completedLessons' | 'unlockedTopics'>): boolean {
+  const index = levels.indexOf(level);
+  if (index <= 0) return true;
+  return (
+    isStageCoreComplete(levels[index - 1], progress.completedLessons) ||
+    progress.unlockedTopics.some((key) => key.split(':')[1] === level)
+  );
 }
 
 function isDifficultyComplete(
@@ -225,10 +268,6 @@ function isDifficultyComplete(
   return lessons.length > 0 && lessons.every((l) => completed.includes(l.id));
 }
 
-function isTrackLevelComplete(track: Track, level: Level, completed: string[]): boolean {
-  const topics = track.topics[level] ?? [];
-  return topics.length > 0 && topics.every((t) => isTopicComplete(track, level, t.id, completed));
-}
 
 export function resolveUnlocksOnComplete(
   lessonId: string,
@@ -279,12 +318,13 @@ export function resolveUnlocksOnComplete(
     }
   }
 
-  if (isTopicComplete(track, meta.level, meta.category, completed)) {
+  if (isTopicCoreComplete(track, meta.level, meta.category, completed)) {
     addLesson(getNextTopicFirstLesson(track, meta.level, meta.category)?.id ?? null);
   }
 
-  if (isTrackLevelComplete(track, meta.level, completed)) {
-    addLesson(getNextLevelFirstLesson(track, meta.level)?.id ?? null);
+  // Finishing a stage's core in every track opens the next level of every track.
+  if (isStageCoreComplete(meta.level, completed)) {
+    for (const t of tracks) addLesson(getNextLevelFirstLesson(t, meta.level)?.id ?? null);
   }
 
   return {
@@ -293,6 +333,26 @@ export function resolveUnlocksOnComplete(
     unlockedTopics: [...unlockedTopics],
     newlyUnlocked,
   };
+}
+
+/**
+ * Re-applies the unlock rules to everything already completed, so a change
+ * to the rules reaches existing learners without a migration. Only ever adds
+ * unlocks.
+ */
+export function reconcileUnlocks<T extends UserProgress>(progress: T): T {
+  let state: T = progress;
+  for (const id of progress.completedLessons) {
+    const unlocks = resolveUnlocksOnComplete(id, state);
+    if (unlocks.newlyUnlocked.length === 0) continue;
+    state = {
+      ...state,
+      unlockedLessons: unlocks.unlockedLessons,
+      unlockedTiers: unlocks.unlockedTiers,
+      unlockedTopics: unlocks.unlockedTopics,
+    };
+  }
+  return state;
 }
 
 export function updateStreak(lastActiveDate: string | null, streak: number): { streak: number; lastActiveDate: string } {
