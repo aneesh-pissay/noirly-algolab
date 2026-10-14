@@ -10,6 +10,7 @@ import {
   FlaskConical,
   LayoutDashboard,
   LogIn,
+  Route,
   Search,
   Settings,
   type LucideIcon,
@@ -52,12 +53,15 @@ const MAIN: NavEntry[] = [
   { href: "/progress", label: "Progress", icon: ChartColumn, active: prefix("/progress") },
 ];
 
-const LEARN: NavEntry[] = tracks.map((track) => ({
-  href: `/learn-path?track=${track.id}`,
-  label: track.title,
-  icon: iconFor(track.id as TrackId),
-  active: (p, t) => p === "/learn-path" && (t ?? "data-structures") === track.id,
-}));
+const LEARN: NavEntry[] = [
+  { href: "/learn-path", label: "Full path", icon: Route, active: (p, t) => p === "/learn-path" && !t },
+  ...tracks.map((track) => ({
+    href: `/learn-path?track=${track.id}`,
+    label: track.title,
+    icon: iconFor(track.id as TrackId),
+    active: (p: string, t: string | null) => p === "/learn-path" && t === track.id,
+  })),
+];
 
 const EXPLORE: NavEntry[] = [
   { href: "/visual-lab", label: "Visual Lab", icon: FlaskConical, active: prefix("/visual-lab") },

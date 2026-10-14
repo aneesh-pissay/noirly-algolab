@@ -6,6 +6,7 @@ import {
   getLessonMeta,
   getTopicProgress,
   normalizeProgressState,
+  reconcileUnlocks,
   resolveUnlocksOnComplete,
 } from '@/src/features/progress/progress.utils';
 import type { CompleteLessonResult, UserProgress } from '@/src/features/progress/progress.types';
@@ -30,7 +31,7 @@ function docToLessonState(doc: IUserCurriculumProgress): Omit<UserProgress, 'xp'
 export function buildAggregatedProgress(user: IUser, doc: IUserCurriculumProgress): AggregatedUserProgress {
   const lessonState = docToLessonState(doc);
   const xp = user.xp ?? 0;
-  return {
+  return reconcileUnlocks({
     userId: String(user._id),
     ...normalizeProgressState({
       ...lessonState,
@@ -39,7 +40,7 @@ export function buildAggregatedProgress(user: IUser, doc: IUserCurriculumProgres
       streak: user.streak ?? 0,
       lastActiveDate: user.lastActiveDate ? user.lastActiveDate.toISOString().slice(0, 10) : null,
     }),
-  };
+  });
 }
 
 export function getDefaultCurriculumDoc(userId: import('mongoose').Types.ObjectId | string) {

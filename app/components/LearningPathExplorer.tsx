@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Breadcrumbs from './Breadcrumbs';
+import StagePath from './StagePath';
 import {
   tracks,
   levels,
@@ -236,9 +237,11 @@ export default function LearningPathExplorer() {
                   'Every lesson pairs theory with an interactive visualizer',
                   'Progress tracking saves your place and unlocks the next lessons',
                 ]}
-                pathOverview="Pick a track below to begin. Complete lessons in order to unlock harder tiers and new topics."
+                pathOverview="Start with the Beginner stage: its topics in all three tracks. Intermediate opens once that core is done, then Advanced."
                 totalLessons={countCurriculumLessons()}
               />
+              <StagePath progress={progress} />
+              <h2 className="section-title pt-2">Browse by track</h2>
               <section className="grid gap-5 md:grid-cols-3">
               {tracks.map((t) => {
                 const theory = getTrackTheory(t.id);
@@ -299,6 +302,11 @@ export default function LearningPathExplorer() {
                         {unlocked ? <Layers size={16} className="text-accent" /> : <Lock size={14} className="text-fg-3" />}
                       </div>
                       <p className="mt-2 text-sm text-fg-2">{count} topics</p>
+                      {!unlocked ? (
+                        <p className="mt-2 text-xs text-fg-2">
+                          Opens after the {levels[levels.indexOf(level) - 1]} core in all three tracks
+                        </p>
+                      ) : null}
                       <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-fg-3">{levelInfo.overview}</p>
                     </button>
                   );

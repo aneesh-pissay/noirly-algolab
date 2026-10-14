@@ -64,7 +64,7 @@ export const levelTheory: Record<Level, LevelTheory> = {
       'Time and space complexity intuition',
       'Step-by-step visualizations to build mental models',
     ],
-    tip: 'Complete Easy lessons first — they unlock Medium and Hard tiers within each topic.',
+    tip: 'Easy lessons unlock Medium, then Hard. Finishing a topic’s Easy and Medium lessons opens the next topic; Intermediate opens once every Beginner topic in all three tracks is done.',
   },
   Intermediate: {
     overview:

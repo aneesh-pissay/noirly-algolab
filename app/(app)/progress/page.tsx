@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { lessonHref } from '@/app/data/lessonRoutes';
 import { useMemo } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Lock } from 'lucide-react';
 import { Card, EmptyState, PageContainer, PageHeader, StatCell, StatGroup } from '@noirly-dev/ui';
 import Breadcrumbs from '@/app/components/Breadcrumbs';
 import { levels, tracks } from '@/app/data/curriculum';
@@ -12,6 +12,8 @@ import {
   getAllLessonMetas,
   getContinueLesson,
   getLessonMeta,
+  getStageProgress,
+  isStageUnlocked,
   useProgressData,
   useProgressHydrated,
 } from '@/src/features/progress';
@@ -79,7 +81,7 @@ export default function ProgressPage() {
   return (
     <PageContainer>
       <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Progress' }]} />
-      <PageHeader eyebrow="Progress" title="Learning progress" lead="Lesson completion across every track and level." />
+      <PageHeader eyebrow="Progress" title="Learning progress" lead="Your path stage by stage, and lesson completion in every track." />
 
       <StatGroup>
         <StatCell label="Lessons completed" value={<span className="matrix-numeral">{completed.size}</span>} caption={`of ${all.length}`} />
@@ -88,6 +90,33 @@ export default function ProgressPage() {
         <StatCell label="Up next" value={<span className="text-base">{continueLesson?.title ?? '—'}</span>} />
       </StatGroup>
 
+      <Card className="p-5">
+        <h2 className="section-title">By stage</h2>
+        <p className="meta mt-1">Core lessons (Easy and Medium) across all three tracks. Each stage opens when the one before it is done.</p>
+        <ul className="mt-5 grid gap-5 md:grid-cols-3">
+          {levels.map((level, index) => {
+            const stage = getStageProgress(level, progress.completedLessons);
+            const unlocked = isStageUnlocked(level, progress);
+            return (
+              <li key={level} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1.5 text-fg">
+                    {unlocked ? null : <Lock size={12} className="text-fg-3" aria-label="Locked" />}
+                    {index + 1}. {level}
+                  </span>
+                  <span className="font-mono text-xs text-fg-2">
+                    {stage.done}/{stage.total}
+                  </span>
+                </div>
+                <Bar value={pct(stage.done, stage.total)} label={`${level} stage core`} />
+                {unlocked ? null : <p className="meta">Opens after the {levels[index - 1]} stage</p>}
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
+
+      <h2 className="section-title">By track</h2>
       <div className="grid gap-5 lg:grid-cols-3">
         {breakdown.map(({ track, rows, done, total }) => {
           const Glyph = iconFor(track.id);
