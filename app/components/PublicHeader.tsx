@@ -23,9 +23,6 @@ export default function PublicHeader() {
           </span>
         </Link>
         <div className="flex shrink-0 items-center gap-2">
-          <Link href="/visual-lab" className="chip hidden sm:inline-flex">
-            Visual Lab
-          </Link>
           {!loading && user ? (
             <Link href="/dashboard" className="btn btn-ghost btn-sm">
               Dashboard
