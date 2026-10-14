@@ -1,7 +1,7 @@
 'use client';
 
 import { useId } from 'react';
-import { Check, ExternalLink } from 'lucide-react';
+import { Check, Download, ExternalLink } from 'lucide-react';
 import { Card, PageContainer, PageHeader, Switch } from '@noirly-dev/ui';
 import Breadcrumbs from '@/app/components/Breadcrumbs';
 import { identityAccountUrl } from '@/app/contexts/AuthContext';
@@ -166,9 +166,17 @@ export default function SettingsPage() {
             <p className="text-sm text-fg-2">
               Your name, email, password and connected apps are managed in Noirly Identity.
             </p>
-            <a href={identityAccountUrl()} className="btn btn-ghost btn-sm">
-              Manage account <ExternalLink size={13} aria-hidden />
-            </a>
+            <div className="flex flex-wrap gap-2">
+              <a href={identityAccountUrl()} className="btn btn-ghost btn-sm">
+                Manage account <ExternalLink size={13} aria-hidden />
+              </a>
+              <a href="/api/progress/export" download className="btn btn-ghost btn-sm">
+                <Download size={13} aria-hidden /> Download my progress
+              </a>
+            </div>
+            <p className="text-xs text-fg-3">
+              A JSON file with your lesson progress, quiz review queue and settings.
+            </p>
           </Section>
 
           <Section title="Appearance">
