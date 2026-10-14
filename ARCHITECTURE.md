@@ -25,7 +25,7 @@ lib/                     shared server helpers: Mongo connection, curriculum pro
 models/                  Mongoose models (database noirly-codelab)
 src/
   core/                  the visualization engine and every algorithm (unchanged)
-  components/            AppShell, theme, brand mark, app switcher, sign-out
+  components/            AppShell, theme and palette controls, brand mark, sign-out
   features/              command palette, progress hooks
   services/              client fetchers (TanStack Query)
   server/

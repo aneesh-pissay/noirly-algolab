@@ -1,4 +1,4 @@
-/** Other Noirly apps, for the landing tiles and the in-app switcher. */
+/** Other Noirly apps, for the landing tiles. */
 export interface NoirlyApp {
   id: string;
   name: string;
