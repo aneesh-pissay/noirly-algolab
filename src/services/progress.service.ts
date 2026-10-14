@@ -1,13 +1,6 @@
 import type { AggregatedUserProgress } from '@/lib/curriculum-progress';
+import { apiJson } from '@/src/lib/api-client';
 import type { CompleteLessonResult, UserProgress } from '@/src/features/progress/progress.types';
-
-function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
 
 export type ProgressApiResponse = AggregatedUserProgress;
 
@@ -17,59 +10,24 @@ export interface CompleteLessonApiResponse {
 }
 
 export async function getUserProgress(): Promise<ProgressApiResponse> {
-  const response = await fetch('/api/progress', {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Failed to load progress');
-  }
-
-  return response.json();
+  return apiJson<ProgressApiResponse>('/api/progress', {}, 'Failed to load progress');
 }
 
-export async function completeLesson(
-  lessonIdOrAlgorithmId: string,
-  quizScore = 100
-): Promise<CompleteLessonApiResponse> {
-  const response = await fetch('/api/progress/complete', {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ lessonId: lessonIdOrAlgorithmId, quizScore }),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Failed to complete lesson');
-  }
-
-  return response.json();
+/** Needs a quiz for this lesson that the server graded as passed. */
+export async function completeLesson(lessonId: string): Promise<CompleteLessonApiResponse> {
+  return apiJson<CompleteLessonApiResponse>(
+    '/api/progress/complete',
+    { method: 'POST', body: JSON.stringify({ lessonId }) },
+    'Failed to complete lesson',
+  );
 }
 
 export async function updateCurrentLesson(lessonId: string): Promise<ProgressApiResponse> {
-  const response = await fetch('/api/progress', {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ currentLesson: lessonId }),
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body.error || 'Failed to update current lesson');
-  }
-
-  return response.json();
-}
-
-export async function updateXP(amount: number): Promise<never> {
-  throw new Error('updateXP is handled server-side via completeLesson');
-}
-
-export async function unlockLesson(lessonId: string): Promise<never> {
-  throw new Error('unlockLesson is handled server-side via completeLesson');
+  return apiJson<ProgressApiResponse>(
+    '/api/progress',
+    { method: 'PATCH', body: JSON.stringify({ currentLesson: lessonId }) },
+    'Failed to update current lesson',
+  );
 }
 
 export type { UserProgress };

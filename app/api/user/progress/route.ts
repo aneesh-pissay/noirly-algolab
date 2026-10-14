@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { requireUser } from '@/src/server/auth/session';
 import connectDB from '@/lib/mongodb';
 import UserProgress from '@/models/UserProgress';
-import User from '@/models/User';
-import { calculateLevelFromXp, clampXpGain } from '@/lib/gamification';
-import { calculateNextStreak } from '@/lib/streak';
 
 // GET /api/user/progress - Get user learning progress
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     await connectDB();
 
@@ -27,14 +14,15 @@ export async function GET(request: NextRequest) {
     const levelId = searchParams.get('levelId');
     const topicSlug = searchParams.get('topicSlug');
 
-    let query: any = { userId: decoded.userId };
-    if (levelId) query.levelId = parseInt(levelId);
+    const query: { userId: string; levelId?: number; topicSlug?: string } = { userId };
+    if (levelId) query.levelId = parseInt(levelId, 10);
     if (topicSlug) query.topicSlug = topicSlug;
 
     const progress = await UserProgress.find(query).sort({ lastAccessedAt: -1 });
 
     return NextResponse.json({ progress });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Get progress error:', error);
     return NextResponse.json({ error: 'Failed to get progress' }, { status: 500 });
   }
@@ -43,19 +31,9 @@ export async function GET(request: NextRequest) {
 // POST /api/user/progress - Create or update progress
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    const { userId } = await requireUser();
 
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
-
-    const { levelId, topicSlug, topicTitle, status, progress, timeSpent, score, notes, isBookmarked, xpGained } =
+    const { levelId, topicSlug, topicTitle, status, progress, timeSpent, score, notes, isBookmarked } =
       await request.json();
 
     if (!levelId || !topicSlug || !topicTitle) {
@@ -65,12 +43,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Plain values only: an object here would become a Mongo operator.
+    if (typeof topicSlug !== 'string' || typeof topicTitle !== 'string' || !Number.isInteger(levelId)) {
+      return NextResponse.json({ error: 'Invalid progress payload' }, { status: 400 });
+    }
+
     await connectDB();
 
-    const existingProgress = await UserProgress.findOne({ userId: decoded.userId, topicSlug });
-
-    const updateData: any = {
-      userId: decoded.userId,
+    const updateData: Record<string, unknown> & { $inc?: Record<string, number> } = {
+      userId: userId,
       levelId,
       topicSlug,
       topicTitle,
@@ -91,42 +72,16 @@ export async function POST(request: NextRequest) {
     }
 
     const userProgress = await UserProgress.findOneAndUpdate(
-      { userId: decoded.userId, topicSlug },
+      { userId: userId, topicSlug },
       updateData,
       { new: true, upsert: true, runValidators: true }
     );
 
-    let awardedXp = 0;
-    let leveledUp = false;
-    let currentLevel: number | null = null;
-
-    const isCompletingNow = status === 'completed' && progress === 100;
-    const wasAlreadyCompleted = existingProgress?.status === 'completed';
-
-    // Award XP only on first completion of a topic.
-    if (isCompletingNow && !wasAlreadyCompleted) {
-      const requestedXp = typeof xpGained === 'number' ? xpGained : 30;
-      awardedXp = clampXpGain(requestedXp);
-
-      if (awardedXp > 0) {
-        const user = await User.findById(decoded.userId).select('xp currentLevel');
-
-        if (user) {
-          const nextXp = (user.xp || 0) + awardedXp;
-          const nextLevel = calculateLevelFromXp(nextXp);
-          const streakResult = calculateNextStreak(user.lastActiveDate, user.streak || 0);
-          leveledUp = nextLevel > (user.currentLevel || 1);
-          currentLevel = nextLevel;
-
-          await User.findByIdAndUpdate(decoded.userId, {
-            xp: nextXp,
-            currentLevel: nextLevel,
-            streak: streakResult.streak,
-            ...(streakResult.shouldUpdateLastActiveDate ? { lastActiveDate: new Date() } : {}),
-          });
-        }
-      }
-    }
+    // XP is awarded only by /api/progress/complete, after a server-graded
+    // quiz. This legacy per-topic record never grants XP from client values.
+    const awardedXp = 0;
+    const leveledUp = false;
+    const currentLevel: number | null = null;
 
     return NextResponse.json({
       message: 'Progress updated successfully',
@@ -135,7 +90,8 @@ export async function POST(request: NextRequest) {
       leveledUp,
       currentLevel,
     });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Update progress error:', error);
     return NextResponse.json({ error: 'Failed to update progress' }, { status: 500 });
   }

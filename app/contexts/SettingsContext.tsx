@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { applyAppearance, resolveTheme } from '@/lib/apply-appearance';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { applyAppearance, readStoredTheme, resolveTheme } from '@/lib/apply-appearance';
 import {
   DEFAULT_CLIENT_SETTINGS,
   type ClientSettings,
@@ -13,6 +13,8 @@ import {
   type ThemeMode,
 } from '@/lib/settings.types';
 import * as settingsAPI from '@/src/services/settings.service';
+import { useSession } from 'next-auth/react';
+import { trackSave } from '@/src/stores/saving';
 
 export type { ThemeMode, CodeLanguage, FontSize, ProfileVisibility, EmailNotifications };
 
@@ -30,53 +32,62 @@ interface SettingsContextValue extends ClientSettings {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
+const SYSTEM_DARK = '(prefers-color-scheme: dark)';
+
+function subscribeSystemScheme(onChange: () => void) {
+  const mq = window.matchMedia(SYSTEM_DARK);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+}
+
+function readSystemDark() {
+  return window.matchMedia(SYSTEM_DARK).matches;
+}
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<ClientSettings>(DEFAULT_CLIENT_SETTINGS);
+  const [settings, setSettings] = useState<ClientSettings>(() =>
+    typeof window === 'undefined' ? DEFAULT_CLIENT_SETTINGS : { ...DEFAULT_CLIENT_SETTINGS, theme: readStoredTheme() },
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light'>('dark');
+  const systemDark = useSyncExternalStore(subscribeSystemScheme, readSystemDark, () => true);
+  const resolvedTheme: 'dark' | 'light' = settings.theme === 'auto' ? (systemDark ? 'dark' : 'light') : resolveTheme(settings.theme);
 
   const settingsRef = useRef(settings);
-  settingsRef.current = settings;
+  useLayoutEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
   const loadSeqRef = useRef(0);
   const saveSeqRef = useRef(0);
+  // Signed-out visitors keep settings in memory only (nothing to save to).
+  // loadSettings is only called by SettingsSync once signed in; this ref is
+  // for later saves.
+  const { status } = useSession();
+  const signedInRef = useRef(false);
+  useEffect(() => {
+    signedInRef.current = status === 'authenticated';
+  }, [status]);
 
   useEffect(() => {
     applyAppearance(settings);
-    setResolvedTheme(resolveTheme(settings.theme));
-  }, [settings]);
-
-  useEffect(() => {
-    if (settings.theme !== 'auto') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => {
-      applyAppearance(settingsRef.current);
-      setResolvedTheme(resolveTheme('auto'));
-    };
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [settings.theme]);
+  }, [settings, systemDark]);
 
   const resetSettings = useCallback(() => {
     loadSeqRef.current += 1;
     saveSeqRef.current += 1;
-    setSettings(DEFAULT_CLIENT_SETTINGS);
+    // Signed-out visitors keep the scheme they picked on this device.
+    const local = { ...DEFAULT_CLIENT_SETTINGS, theme: readStoredTheme() };
+    setSettings(local);
     setLoading(false);
     setSaving(false);
     setIsReady(true);
     setError(null);
-    applyAppearance(DEFAULT_CLIENT_SETTINGS);
+    applyAppearance(local);
   }, []);
 
   const loadSettings = useCallback(async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      resetSettings();
-      return;
-    }
-
     const seq = ++loadSeqRef.current;
     setLoading(true);
     setError(null);
@@ -95,7 +106,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setIsReady(true);
       }
     }
-  }, [resetSettings]);
+  }, []);
 
   const updateSettings = useCallback((patch: ClientSettingsPatch) => {
     const previous = settingsRef.current;
@@ -112,8 +123,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSaving(true);
     setError(null);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
+    if (!signedInRef.current) {
       saveSeqRef.current = 0;
       setSaving(false);
       return;
@@ -121,7 +131,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     void (async () => {
       try {
-        const saved = await settingsAPI.updateUserSettings(patch);
+        const saved = await trackSave(settingsAPI.updateUserSettings(patch));
         if (saveSeq === saveSeqRef.current) {
           setSettings(saved);
           setError(null);

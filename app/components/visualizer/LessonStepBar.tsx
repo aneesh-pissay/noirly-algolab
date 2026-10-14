@@ -1,6 +1,7 @@
 'use client';
 
-import { BookOpen, CheckCircle2, Circle, HelpCircle, PlayCircle } from 'lucide-react';
+import { useRef, type KeyboardEvent } from 'react';
+import { BookOpen, CheckCircle2, HelpCircle, Lock, PlayCircle } from 'lucide-react';
 
 export type LessonStep = 'visualize' | 'theory' | 'quiz';
 
@@ -16,46 +17,73 @@ interface Props {
   onStepClick: (step: LessonStep) => void;
 }
 
-const STEPS: { id: LessonStep; label: string; icon: typeof PlayCircle }[] = [
-  { id: 'theory', label: 'Theory', icon: BookOpen },
-  { id: 'visualize', label: 'Visualize', icon: PlayCircle },
-  { id: 'quiz', label: 'Quiz', icon: HelpCircle },
+export const LESSON_STEPS: { id: LessonStep; label: string; icon: typeof PlayCircle; shortcut: string }[] = [
+  { id: 'theory', label: 'Theory', icon: BookOpen, shortcut: '1' },
+  { id: 'visualize', label: 'Visualize', icon: PlayCircle, shortcut: '2' },
+  { id: 'quiz', label: 'Quiz', icon: HelpCircle, shortcut: '3' },
 ];
 
+/**
+ * Steps unlock in order: theory → visualize → quiz. The quiz opens once the
+ * visualization has been stepped to its final frame (or the lesson is
+ * already completed), and the server re-checks completion independently.
+ */
+export function canAccessStep(step: LessonStep, completed: StepState): boolean {
+  return step === 'theory' || (step === 'visualize' && completed.theory) || (step === 'quiz' && completed.theory && completed.visualize);
+}
+
 export default function LessonStepBar({ active, completed, onStepClick }: Props) {
+  const refs = useRef<Record<LessonStep, HTMLButtonElement | null>>({ theory: null, visualize: null, quiz: null });
+
+  // Arrow keys move between tabs (WAI-ARIA tabs pattern), skipping locked ones.
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    const open = LESSON_STEPS.filter((s) => canAccessStep(s.id, completed));
+    const index = open.findIndex((s) => s.id === active);
+    const next = open[(index + (event.key === 'ArrowRight' ? 1 : -1) + open.length) % open.length];
+    if (next) {
+      onStepClick(next.id);
+      refs.current[next.id]?.focus();
+    }
+  };
+
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container p-2">
-      {STEPS.map((step, index) => {
-        const Icon = step.icon;
+    <div role="tablist" aria-label="Lesson steps" onKeyDown={onKeyDown} className="tab-list flex flex-wrap items-center gap-1">
+      {LESSON_STEPS.map((step) => {
+        const Glyph = step.icon;
         const isActive = active === step.id;
         const isDone = completed[step.id];
-        const canAccess =
-          step.id === 'theory' ||
-          (step.id === 'visualize' && completed.theory) ||
-          (step.id === 'quiz' && completed.theory && completed.visualize);
+        const canAccess = canAccessStep(step.id, completed);
 
         return (
-          <div key={step.id} className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={!canAccess}
-              onClick={() => canAccess && onStepClick(step.id)}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                isActive
-                  ? 'bg-primary/15 text-primary border border-primary/30'
-                  : isDone
-                  ? 'text-emerald-400 border border-emerald-400/20 bg-emerald-500/10'
-                  : 'text-on-surface-variant border border-transparent hover:bg-surface-container-high'
-              }`}
-            >
-              {isDone ? <CheckCircle2 size={16} /> : <Icon size={16} />}
-              {step.label}
-              {isDone && !isActive && <span className="text-[10px] text-emerald-400/80">Done</span>}
-            </button>
-            {index < STEPS.length - 1 && (
-              <Circle size={6} className="text-on-surface-variant/30" fill="currentColor" />
+          <button
+            key={step.id}
+            ref={(el) => {
+              refs.current[step.id] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`lesson-tab-${step.id}`}
+            aria-selected={isActive}
+            aria-controls={`lesson-panel-${step.id}`}
+            aria-disabled={!canAccess}
+            aria-keyshortcuts={step.shortcut}
+            tabIndex={isActive ? 0 : -1}
+            onClick={() => canAccess && onStepClick(step.id)}
+            className={`tab focusable inline-flex items-center gap-2 ${canAccess ? '' : 'cursor-not-allowed opacity-50'}`}
+          >
+            {isDone ? (
+              <CheckCircle2 size={15} className="text-positive" aria-hidden />
+            ) : canAccess ? (
+              <Glyph size={15} aria-hidden />
+            ) : (
+              <Lock size={13} aria-hidden />
             )}
-          </div>
+            {step.label}
+            {isDone ? <span className="sr-only">(done)</span> : null}
+            {!canAccess ? <span className="sr-only">(locked)</span> : null}
+          </button>
         );
       })}
     </div>

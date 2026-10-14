@@ -4,6 +4,72 @@ import { AlgorithmCategory } from '@/src/core/engine/types';
 const L = (...lines: string[]) => lines;
 
 const EXPLICIT_SNIPPETS: Record<string, string[]> = {
+  'array-two-sum-sorted': L(
+    'function twoSumSorted(nums, target) {',
+    '  let left = 0, right = nums.length - 1;',
+    '  while (left < right) {',
+    '    const sum = nums[left] + nums[right];',
+    '    if (sum === target) return [left, right];',
+    '    if (sum < target) left++;',
+    '    else right--;',
+    '  }',
+    '  return [];',
+    '}'
+  ),
+  'array-three-sum': L(
+    'function threeSum(nums, target = 0) {',
+    '  nums.sort((a, b) => a - b); const result = [];',
+    '  for (let i = 0; i < nums.length - 2; i++) {',
+    '    if (i > 0 && nums[i] === nums[i - 1]) continue;',
+    '    let left = i + 1, right = nums.length - 1;',
+    '    while (left < right) {',
+    '      const sum = nums[i] + nums[left] + nums[right];',
+    '      if (sum === target) { result.push([nums[i], nums[left], nums[right]]);',
+    '        skipDuplicates(); left++; right--; }',
+    '      else if (sum < target) left++;',
+    '      else right--;',
+    '    }',
+    '  }',
+    '  return result;',
+    '}'
+  ),
+  'array-remove-duplicates-sorted': L(
+    'function removeDuplicates(nums) {',
+    '  if (nums.length === 0) return 0;',
+    '  let i = 1;',
+    '  for (let j = 1; j < nums.length; j++) {',
+    '    if (nums[j] !== nums[i - 1]) {',
+    '      nums[i] = nums[j];',
+    '      i++;',
+    '    }',
+    '  }',
+    '  return i;',
+    '}'
+  ),
+  'string-longest-unique-substring': L(
+    'function lengthOfLongestSubstring(s) {',
+    '  const lastSeen = new Map(); let left = 0, best = 0;',
+    '  for (let right = 0; right < s.length; right++) {',
+    '    const c = s[right];',
+    '    if (lastSeen.get(c) >= left) left = lastSeen.get(c) + 1;',
+    '    lastSeen.set(c, right);',
+    '    best = Math.max(best, right - left + 1);',
+    '  }',
+    '  return best;',
+    '}'
+  ),
+  'string-count-anagrams': L(
+    'function countAnagrams(text, pattern) {',
+    '  const need = counts(pattern), have = {}; let count = 0;',
+    '  for (let right = 0; right < text.length; right++) {',
+    '    have[text[right]] = (have[text[right]] ?? 0) + 1;',
+    '    if (right >= pattern.length) have[text[right - pattern.length]]--;',
+    '    if (right < pattern.length - 1) continue;',
+    '    if (sameCounts(have, need)) count++;',
+    '  }',
+    '  return count;',
+    '}'
+  ),
   'sorting-bubble': L(
     'function bubbleSort(arr) {',
     '  for (let i = 0; i < arr.length - 1; i++) {',

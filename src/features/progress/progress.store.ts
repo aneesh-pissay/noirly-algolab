@@ -2,8 +2,9 @@
 
 import { create } from 'zustand';
 import type { CompleteLessonResult, UserProgress } from './progress.types';
-import { getInitialProgress, getLessonById, getLessonStatus } from './progress.utils';
+import { getInitialProgress, getLessonMeta, getLessonStatus } from './progress.utils';
 import * as progressAPI from '@/src/services/progress.service';
+import { trackSave } from '@/src/stores/saving';
 
 /** Stable fallback — must not allocate a new object per selector call (React 19 / useSyncExternalStore). */
 const CACHED_INITIAL_PROGRESS = getInitialProgress();
@@ -15,8 +16,9 @@ interface ProgressStore {
   isReady: boolean;
   loadProgress: () => Promise<void>;
   reset: () => void;
-  setCurrentLessonByAlgorithm: (algorithmId: string) => Promise<void>;
-  completeLesson: (lessonIdOrAlgorithmId: string, quizScore?: number) => Promise<CompleteLessonResult | null>;
+  setCurrentLesson: (lessonId: string) => Promise<void>;
+  /** Completes a lesson whose quiz the server has graded as passed. */
+  completeLesson: (lessonId: string) => Promise<CompleteLessonResult | null>;
   getLessonStatus: (lessonId: string) => import('./progress.types').LessonStatusType;
   isLessonCompleted: (lessonId: string) => boolean;
   isLessonUnlocked: (lessonId: string) => boolean;
@@ -31,12 +33,6 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
   reset: () => set({ progress: null, loading: false, error: null, isReady: false }),
 
   loadProgress: async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      set({ progress: null, loading: false, isReady: true, error: null });
-      return;
-    }
-
     set({ loading: true, error: null });
     try {
       const data = await progressAPI.getUserProgress();
@@ -51,8 +47,8 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     }
   },
 
-  setCurrentLessonByAlgorithm: async (algorithmId) => {
-    const meta = getLessonById(algorithmId);
+  setCurrentLesson: async (lessonId) => {
+    const meta = getLessonMeta(lessonId);
     const current = get().progress;
     if (!meta || !current) return;
     if (current.completedLessons.includes(meta.id)) return;
@@ -61,21 +57,21 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     set({ progress: { ...current, currentLesson: meta.id } });
 
     try {
-      const updated = await progressAPI.updateCurrentLesson(meta.id);
+      const updated = await trackSave(progressAPI.updateCurrentLesson(meta.id));
       set({ progress: updated });
     } catch {
       /* keep optimistic current lesson */
     }
   },
 
-  completeLesson: async (lessonIdOrAlgorithmId, quizScore = 100) => {
-    const lesson = getLessonById(lessonIdOrAlgorithmId);
+  completeLesson: async (lessonId) => {
+    const lesson = getLessonMeta(lessonId);
     if (!lesson) return null;
 
     const previous = get().progress;
 
     try {
-      const { progress, result } = await progressAPI.completeLesson(lessonIdOrAlgorithmId, quizScore);
+      const { progress, result } = await trackSave(progressAPI.completeLesson(lesson.id));
       set({ progress, error: null });
       return result;
     } catch (error) {

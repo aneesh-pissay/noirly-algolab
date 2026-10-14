@@ -1,31 +1,32 @@
+'use client';
+
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { useRegisterCrumbs } from '@/src/components/ShellBreadcrumb';
 
 interface BreadcrumbItem {
   label: string;
   href?: string;
 }
 
-interface BreadcrumbsProps {
-  items: BreadcrumbItem[];
-}
+/**
+ * The page's trail. On desktop it is shown in the shell's top bar; this
+ * in-page copy is for narrow screens, where the top bar has no room for it.
+ */
+export default function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
+  useRegisterCrumbs(items);
 
-export default function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 text-sm sm:mb-6">
+    <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 overflow-x-auto pb-1 text-[0.8125rem] lg:hidden">
       {items.map((item, index) => (
-        <div key={index} className="flex shrink-0 items-center gap-2">
-          {index > 0 && (
-            <span className="material-symbols-outlined text-sm text-on-surface-variant">chevron_right</span>
-          )}
-          {item.href ? (
-            <Link
-              href={item.href}
-              className="whitespace-nowrap font-body-md text-on-surface-variant transition-colors hover:text-primary"
-            >
+        <div key={`${item.label}-${index}`} className="flex shrink-0 items-center gap-1.5">
+          {index > 0 && <ChevronRight aria-hidden size={13} className="text-fg-3" />}
+          {item.href && index < items.length - 1 ? (
+            <Link href={item.href} className="whitespace-nowrap text-fg-3 transition-colors hover:text-fg">
               {item.label}
             </Link>
           ) : (
-            <span className="max-w-[12rem] truncate font-body-md font-medium text-on-surface sm:max-w-none">
+            <span aria-current={index === items.length - 1 ? 'page' : undefined} className="max-w-[12rem] truncate font-medium text-fg">
               {item.label}
             </span>
           )}

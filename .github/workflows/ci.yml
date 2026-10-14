@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # .npmrc reads this to install @noirly-dev/ui from GitHub Packages. The
+      # package must grant this repository read access (package settings →
+      # Manage Actions access), or set NOIRLY_PACKAGES_TOKEN to a PAT with
+      # read:packages.
+      GITHUB_TOKEN: ${{ secrets.NOIRLY_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+        env:
+          # Build-time placeholders only; nothing connects during `next build`.
+          AUTH_SECRET: ci-build-only-7f3c9a1e5b2d8f4a6c0e9b7d3f1a5c8e
+          AUTH_NOIRLY_ISSUER: https://identity.invalid
+          MONGODB_URI: mongodb://127.0.0.1:27017/noirly-codelab-ci
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    env:
+      GITHUB_TOKEN: ${{ secrets.NOIRLY_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+      E2E_MONGODB_URI: mongodb://127.0.0.1:27017/noirly-algolab-e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results

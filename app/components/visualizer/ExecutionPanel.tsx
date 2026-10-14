@@ -12,60 +12,59 @@ function KeyValueBlock({ title, data }: { title: string; data: Record<string, un
   if (!entries.length) return null;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[rgba(31,41,55,0.6)] p-3">
-      <p className="mb-2 text-[10px] uppercase tracking-widest text-slate-400">{title}</p>
-      <div className="space-y-1.5">
+    <div className="surface-flat p-3">
+      <p className="mono-label mb-2">{title}</p>
+      <dl className="space-y-1.5">
         {entries.map(([key, value]) => (
           <div key={key} className="flex items-start justify-between gap-2 text-xs">
-            <span className="font-mono text-cyan-300/80">{key}</span>
-            <span className="font-mono text-slate-200 text-right break-all">
+            <dt className="font-mono text-accent">{key}</dt>
+            <dd className="break-all text-right font-mono text-fg">
               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-            </span>
+            </dd>
           </div>
         ))}
-      </div>
+      </dl>
     </div>
   );
 }
 
 export default function ExecutionPanel({ algorithm, step }: Props) {
   if (!step) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-500">
-        No step loaded
-      </div>
-    );
+    return <div className="flex h-full items-center justify-center text-sm text-fg-3">No step loaded</div>;
   }
 
   const complexity = step.complexity ?? algorithm.complexity;
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto pr-1">
-      <div className="rounded-xl border border-white/10 bg-[rgba(31,41,55,0.6)] p-4">
-        <p className="text-[10px] uppercase tracking-widest text-slate-400">Current Action</p>
-        <p className="mt-1 font-mono text-sm text-cyan-300">{step.action}</p>
+    <div className="flex h-full flex-col gap-3 overflow-y-auto pr-1">
+      <div className="surface-flat p-4">
+        <p className="mono-label">Current action</p>
+        <p className="mt-1 font-mono text-sm text-accent">{step.action}</p>
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-[rgba(31,41,55,0.6)] p-4">
-        <p className="text-[10px] uppercase tracking-widest text-slate-400">Explanation</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-200">{step.description}</p>
+      {/* Announced to screen readers as the visualization moves. */}
+      <div className="surface-flat p-4">
+        <p className="mono-label">Explanation</p>
+        <p className="mt-2 text-sm leading-relaxed text-fg" aria-live="polite" aria-atomic="true">
+          {step.description}
+        </p>
       </div>
 
       <KeyValueBlock title="Variables" data={step.variables as Record<string, unknown>} />
       <KeyValueBlock title="Memory" data={step.memory as Record<string, unknown>} />
 
-      <div className="rounded-xl border border-white/10 bg-[rgba(31,41,55,0.6)] p-4">
-        <p className="mb-2 text-[10px] uppercase tracking-widest text-slate-400">Complexity</p>
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="surface-flat p-4">
+        <p className="mono-label mb-2">Complexity</p>
+        <dl className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-slate-500 text-xs">Time</p>
-            <p className="font-mono text-cyan-200">{complexity.time}</p>
+            <dt className="text-xs text-fg-3">Time</dt>
+            <dd className="font-mono text-accent">{complexity.time}</dd>
           </div>
           <div>
-            <p className="text-slate-500 text-xs">Space</p>
-            <p className="font-mono text-cyan-200">{complexity.space}</p>
+            <dt className="text-xs text-fg-3">Space</dt>
+            <dd className="font-mono text-accent">{complexity.space}</dd>
           </div>
-        </div>
+        </dl>
       </div>
     </div>
   );

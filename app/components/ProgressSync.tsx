@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAppSelector } from '../store/hooks';
+import { useAuth } from '../contexts/AuthContext';
 import { useProgressStore } from '@/src/features/progress';
 
 export default function ProgressSync() {
-  const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, loading } = useAuth();
   const loadProgress = useProgressStore((s) => s.loadProgress);
   const reset = useProgressStore((s) => s.reset);
 
@@ -13,7 +13,7 @@ export default function ProgressSync() {
     if (loading) return;
 
     if (isAuthenticated) {
-      loadProgress();
+      void loadProgress();
     } else {
       reset();
     }

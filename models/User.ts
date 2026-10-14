@@ -3,8 +3,12 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IUser extends Document {
   username: string;
   email: string;
-  password: string;
+  /** Legacy: set only for accounts created before Noirly Identity SSO. */
+  password?: string;
   isVerified: boolean;
+
+  /** Noirly Identity `sub`. Set on first SSO sign-in; never changes. */
+  identitySub?: string;
   
   // Profile fields
   firstName?: string;
@@ -21,7 +25,7 @@ export interface IUser extends Document {
   // User role
   role: 'user' | 'admin' | 'instructor';
   
-  // Authentication tokens
+  // Legacy authentication tokens (unused since Noirly Identity SSO)
   verificationToken?: string;
   verificationTokenExpiry?: Date;
   resetPasswordToken?: string;
@@ -48,15 +52,19 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        'Please provide a valid email address',
-      ],
+      // Identity has already validated the address; this only rejects
+      // obvious garbage (the old pattern refused TLDs longer than 3 letters).
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please provide a valid email address'],
     },
+    // Legacy password hash. Accounts created through Noirly Identity have none.
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+    },
+    identitySub: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
     },
     isVerified: {
       type: Boolean,

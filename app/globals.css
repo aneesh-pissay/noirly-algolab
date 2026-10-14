@@ -1,268 +1,137 @@
 @import "tailwindcss";
+@source "../node_modules/@noirly-dev/ui/dist";
+@import "@noirly-dev/ui/styles.css";
+/* Pointer spotlight, card tilt. The branded cursor is off (see layout.tsx). */
+@import "@noirly-dev/ui/effects.css";
+/* Route shutter. */
+@import "@noirly-dev/ui/transitions.css";
+/* Lenis owns the document scroller; this sizes it correctly. */
+@import "lenis/dist/lenis.css";
 
-/* Tailwind tokens → runtime theme variables (set on html.dark / html.light) */
+/*
+ * Short aliases for the package's palette variables (see docs/UI_MIGRATION.md).
+ * Every colour comes from @noirly-dev/ui's theme CSS — nothing is defined here.
+ */
 @theme inline {
-  --color-background: var(--theme-background);
-  --color-surface: var(--theme-background);
-  --color-surface-dim: var(--theme-surface-dim);
-  --color-surface-container: var(--theme-surface);
-  --color-surface-container-low: var(--theme-surface);
-  --color-surface-container-high: var(--theme-surface-high);
-  --color-surface-container-highest: var(--theme-surface-high);
-  --color-surface-container-lowest: var(--theme-background);
-  --color-surface-bright: var(--theme-surface-high);
-  --color-surface-variant: var(--theme-surface-high);
-  --color-on-background: var(--theme-on-surface);
-  --color-on-surface: var(--theme-on-surface);
-  --color-on-surface-variant: var(--theme-on-surface-variant);
-  --color-primary: var(--theme-primary);
-  --color-on-primary: var(--theme-on-primary);
-  --color-primary-container: var(--theme-primary);
-  --color-on-primary-container: var(--theme-on-primary);
-  --color-outline: var(--theme-outline);
-  --color-outline-variant: var(--theme-outline-variant);
-  --color-tertiary: var(--theme-tertiary);
-  --color-secondary: var(--theme-on-surface-variant);
-  --color-on-secondary-container: var(--theme-on-surface-variant);
-  --color-secondary-container: var(--theme-surface-high);
-  --color-inverse-surface: var(--theme-on-surface);
-  --color-error: var(--theme-error);
-  --color-success: var(--theme-success);
-  --color-warning: var(--theme-warning);
-  --color-primary-hover: var(--theme-primary-hover);
-  --color-icon: var(--theme-icon);
-  --color-icon-active: var(--theme-icon-active);
-
-  --font-display: var(--font-geist-sans);
-  --font-display-mobile: var(--font-geist-sans);
-  --font-code-md: var(--font-jetbrains-mono);
-  --font-body-lg: var(--font-geist-sans);
-  --font-headline-sm: var(--font-geist-sans);
-  --font-headline-md: var(--font-geist-sans);
-  --font-body-md: var(--font-geist-sans);
-  --font-label-sm: var(--font-jetbrains-mono);
-
-  --font-size-display: 2rem;
-  --font-size-display--line-height: 2.5rem;
-  --font-size-display--letter-spacing: -0.02em;
-  --font-size-display--font-weight: 600;
-  --font-size-display-mobile: 1.5rem;
-  --font-size-display-mobile--line-height: 2rem;
-  --font-size-display-mobile--font-weight: 600;
-  --font-size-code-md: 0.875rem;
-  --font-size-code-md--line-height: 1.25rem;
-  --font-size-code-md--font-weight: 400;
-  --font-size-body-lg: 1rem;
-  --font-size-body-lg--line-height: 1.5rem;
-  --font-size-body-lg--font-weight: 400;
-  --font-size-headline-sm: 1.125rem;
-  --font-size-headline-sm--line-height: 1.75rem;
-  --font-size-headline-sm--font-weight: 500;
-  --font-size-headline-md: 1.5rem;
-  --font-size-headline-md--line-height: 2rem;
-  --font-size-headline-md--letter-spacing: -0.01em;
-  --font-size-headline-md--font-weight: 600;
-  --font-size-body-md: 0.875rem;
-  --font-size-body-md--line-height: 1.25rem;
-  --font-size-body-md--font-weight: 400;
-  --font-size-label-sm: 0.75rem;
-  --font-size-label-sm--line-height: 1rem;
-  --font-size-label-sm--letter-spacing: 0.02em;
-  --font-size-label-sm--font-weight: 500;
-
-  --spacing-container-padding: 1.5rem;
-  --spacing-max-width: 90rem;
-  --spacing-density-medium: 1rem;
-  --spacing-gutter: 1rem;
-  --spacing-unit: 0.25rem;
-  --spacing-density-high: 0.5rem;
-
-  --radius-DEFAULT: 0.25rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-full: 9999px;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--text);
+  --color-fg-2: var(--text-secondary);
+  --color-fg-3: var(--text-muted);
+  --color-line: var(--hairline);
+  --color-line-strong: var(--hairline-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
 }
 
-/* Dark theme — noirlyTheme */
-html.dark {
-  --theme-background: #020617;
-  --theme-surface: #0f172a;
-  --theme-surface-high: #111827;
-  --theme-surface-dim: #020617;
-  --theme-primary: #38bdf8;
-  --theme-primary-hover: #0ea5e9;
-  --theme-on-surface: #f8fafc;
-  --theme-on-surface-variant: #94a3b8;
-  --theme-text-muted: #64748b;
-  --theme-outline: #1e293b;
-  --theme-outline-variant: #334155;
-  --theme-tertiary: #f59e0b;
-  --theme-on-primary: #020617;
-  --theme-success: #22c55e;
-  --theme-warning: #f59e0b;
-  --theme-error: #ef4444;
-  --theme-icon: #e2e8f0;
-  --theme-icon-active: #38bdf8;
-  --theme-glass-bg: rgba(15, 23, 42, 0.75);
-  --theme-glass-border: rgba(255, 255, 255, 0.1);
-  --theme-scrollbar-track: #020617;
-  --theme-scrollbar-thumb: rgba(255, 255, 255, 0.15);
-  --theme-accent-muted: #082f49;
-  --theme-accent-border: rgba(56, 189, 248, 0.35);
+/*
+ * Visualizer state semantics. Renderers and lesson pages read these instead of
+ * hard-coded colours; each state also has a non-colour cue (label, outline
+ * style or icon) in the component that uses it.
+ */
+:root {
+  --viz-active: var(--accent);
+  --viz-compare: var(--accent);
+  --viz-swap: var(--negative);
+  --viz-pivot: var(--negative);
+  --viz-done: var(--positive);
+  --viz-visited: var(--text-secondary);
+  --viz-fail: var(--destructive);
+  --viz-idle: var(--hairline-strong);
 }
 
-/* Light theme — noirlyTheme */
-html.light {
-  --theme-background: #f8fafc;
-  --theme-surface: #ffffff;
-  --theme-surface-high: #f1f5f9;
-  --theme-surface-dim: #ffffff;
-  --theme-primary: #38bdf8;
-  --theme-primary-hover: #0284c7;
-  --theme-on-surface: #020617;
-  --theme-on-surface-variant: #475569;
-  --theme-text-muted: #94a3b8;
-  --theme-outline: #e2e8f0;
-  --theme-outline-variant: #cbd5e1;
-  --theme-tertiary: #d97706;
-  --theme-on-primary: #020617;
-  --theme-success: #16a34a;
-  --theme-warning: #d97706;
-  --theme-error: #dc2626;
-  --theme-icon: #334155;
-  --theme-icon-active: #38bdf8;
-  --theme-glass-bg: rgba(255, 255, 255, 0.9);
-  --theme-glass-border: rgba(0, 0, 0, 0.08);
-  --theme-scrollbar-track: #f1f5f9;
-  --theme-scrollbar-thumb: rgba(0, 0, 0, 0.15);
-  --theme-accent-muted: #e0f2fe;
-  --theme-accent-border: rgba(56, 189, 248, 0.3);
-}
-
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
-/* Authenticated app shell — full width on mobile, sidebar offset on desktop */
-.app-main {
-  margin-left: 0;
-  min-height: 100vh;
-  padding-top: 4rem;
-  background-color: var(--theme-background);
-}
-
-.app-header {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-}
-
-@media (min-width: 1024px) {
-  .app-main {
-    margin-left: 240px;
-  }
-
-  .app-header {
-    left: 240px;
-  }
-}
-
-.glass-card {
-  background: var(--theme-glass-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--theme-glass-border);
-  transition: all 0.3s ease;
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+[role="button"] {
   cursor: pointer;
 }
 
-.glass-card:hover {
-  border-color: var(--theme-accent-border);
-  box-shadow: 0 4px 20px var(--theme-accent-muted);
+button:disabled,
+[type="button"]:disabled,
+[type="submit"]:disabled,
+[type="reset"]:disabled {
+  cursor: not-allowed;
 }
 
+.matrix-numeral {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  line-height: 0.85;
+}
+
+.busy-dots {
+  animation: busy-pulse 1.05s ease-in-out infinite;
+}
+
+@keyframes busy-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Brand mark — <BrandMark>. Tinted with the active accent; sets no size. */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  color: var(--accent);
+}
+
+.brand-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Frosted panel used across lesson and visual-lab screens. */
 .glass-panel {
-  background: var(--theme-glass-bg);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid var(--theme-glass-border);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
-.accent-card {
-  background: var(--theme-accent-muted);
-  border: 1px solid var(--theme-accent-border);
-  cursor: pointer;
-}
-
-button:not(:disabled) {
-  cursor: pointer;
-}
-
-.node-glow {
-  box-shadow: 0 0 20px var(--theme-accent-muted);
-}
-
-.glow-primary {
-  box-shadow: 0 4px 16px var(--theme-accent-muted);
-}
-
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--theme-scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--theme-scrollbar-thumb);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-primary);
-}
-
-body {
-  background: var(--theme-background);
-  color: var(--theme-on-surface);
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-html[data-font-size='small'] {
+/* Settings → Accessibility. Font size scales rem; the others mirror OS settings. */
+html[data-font-size="small"] {
   font-size: 14px;
 }
 
-html[data-font-size='medium'] {
-  font-size: 16px;
-}
-
-html[data-font-size='large'] {
+html[data-font-size="large"] {
   font-size: 18px;
 }
 
-html[data-reduced-motion='true'] *,
-html[data-reduced-motion='true'] *::before,
-html[data-reduced-motion='true'] *::after {
-  animation-duration: 0.01ms !important;
+html[data-reduced-motion="true"] *,
+html[data-reduced-motion="true"] *::before,
+html[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
 
-html.light .rounded-xl,
-html.light .rounded-2xl {
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+/* Spotlight and tilt are decoration; drop them for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight::before {
+    display: none;
+  }
 }
 
-html.light[data-high-contrast='true'] {
-  --theme-on-surface: #000000;
-  --theme-on-surface-variant: #1a1a1a;
-  --theme-outline: #000000;
+html[data-reduced-motion="true"] .spotlight::before {
+  display: none;
 }
 
-html.dark[data-high-contrast='true'] {
-  --theme-on-surface: #ffffff;
-  --theme-on-surface-variant: #e2e8f0;
-  --theme-outline: #ffffff;
+html[data-high-contrast="true"] {
+  --text-secondary: var(--text);
+  --text-muted: var(--text);
+  --hairline: var(--hairline-strong);
 }

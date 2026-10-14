@@ -1,27 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { requireUser } from '@/src/server/auth/session';
 import connectDB from '@/lib/mongodb';
 import UserProgress from '@/models/UserProgress';
 
 // GET /api/user/roadmap - Get learning roadmap with user's progress
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const { userId } = await requireUser();
 
     await connectDB();
 
     // Fetch all user progress records
-    const progressRecords = await UserProgress.find({ userId: decoded.userId }).lean();
+    const progressRecords = await UserProgress.find({ userId: userId }).lean();
 
     // Create a map for quick lookup
     const progressMap = new Map(
@@ -94,6 +84,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error('Error fetching roadmap:', error);
     return NextResponse.json(
       { error: 'Failed to fetch roadmap' },
