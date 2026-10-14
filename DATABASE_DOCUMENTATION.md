@@ -1,533 +1,105 @@
-# Database Models & API Documentation
+# Noirly AlgoLab — data model and API
 
-Complete user management system with MongoDB models for authentication, profiles, learning progress, achievements, and settings.
+MongoDB via Mongoose. The database keeps its original name, **`noirly-codelab`**;
+model changes are additive only. Accounts themselves (passwords, Google
+sign-in, email verification) belong to Noirly Identity — AlgoLab keeps a
+local user record linked to it.
 
----
+## Collections
 
-## 📊 Database Models
+### `users` — `models/User.ts`
 
-### 1. **User Model** (`models/User.ts`)
+| Field | Notes |
+|---|---|
+| `identitySub` | Noirly Identity subject. Unique, sparse. Set on first Identity sign-in. **New.** |
+| `username`, `email` | Unique. Filled from Identity for new accounts. |
+| `password` | Legacy hash, **now optional** — Identity accounts have none and it is never read. |
+| `isVerified` | Mirrors Identity's `email_verified` at link time. |
+| `firstName`, `lastName`, `avatar`, `bio` | Profile. |
+| `currentLevel`, `xp`, `streak`, `lastActiveDate` | Gamification, computed on the server (not shown in the UI). |
+| `role` | `user` \| `admin` \| `instructor`. |
+| `verificationToken*`, `resetPassword*` | Legacy, unused. |
 
-Core user authentication and profile data.
+Linking: by `identitySub`; else an existing user with the same email **only
+if Identity says it is verified**; else a new user. `pnpm
+report:unlinked-users` counts users without `identitySub`.
 
-**Fields:**
-```typescript
-{
-  // Authentication
-  username: string (unique, 3-30 chars)
-  email: string (unique, validated)
-  password: string (hashed, min 6 chars)
-  isVerified: boolean
-  
-  // Profile
-  firstName?: string
-  lastName?: string
-  avatar?: string (URL)
-  bio?: string (max 500 chars)
-  
-  // Learning Progress
-  currentLevel: number (1-17)
-  xp: number (experience points)
-  streak: number (consecutive days)
-  lastActiveDate?: Date
-  
-  // Authorization
-  role: 'user' | 'admin' | 'instructor'
-  
-  // Auth Tokens
-  verificationToken?: string
-  verificationTokenExpiry?: Date
-  resetPasswordToken?: string
-  resetPasswordExpiry?: Date
-  
-  // Timestamps
-  createdAt: Date
-  updatedAt: Date
-}
-```
+### `user_curriculum_progress` — `models/UserCurriculumProgress.ts`
 
----
+One document per user.
 
-### 2. **UserProgress Model** (`models/UserProgress.ts`)
+| Field | Notes |
+|---|---|
+| `completedLessons`, `unlockedLessons`, `unlockedTiers`, `unlockedTopics` | Lesson ids from `app/data/curriculum.ts`. |
+| `currentLesson`, `recentlyCompleted` | "Continue" pointer and recent list. |
+| `lastPassedAttempt` | `{ lessonId, score, templated, passedAt }` — the last server-graded passed quiz. `/api/progress/complete` requires it to match the lesson and be under 24 hours old. **New.** |
+| `reviewQueue` | `[{ lessonId, questionId, stage 0–2, dueAt, missedAt }]` — missed questions due after 1, 3, 7 days. **New.** |
 
-Tracks learning progress for each topic/level.
+### `usersettings` — `models/UserSettings.ts`
 
-**Fields:**
-```typescript
-{
-  userId: ObjectId (ref: User)
-  
-  // Topic identification
-  levelId: number (1-17)
-  topicSlug: string (e.g., "bubble-sort")
-  topicTitle: string
-  
-  // Progress tracking
-  status: 'not-started' | 'in-progress' | 'completed'
-  progress: number (0-100)
-  completedAt?: Date
-  timeSpent: number (seconds)
-  attempts: number
-  score?: number (0-100)
-  
-  // User interaction
-  lastAccessedAt: Date
-  notes?: string (max 2000 chars)
-  isBookmarked: boolean
-}
-```
+Appearance (`theme`, `fontSize`, `highContrast`, `reducedMotion`), learning
+(`dailyGoal`, `playbackSpeed`, `codeLanguage`, `autoPlayVideos`,
+`reminderTime`), `emailNotifications`, privacy flags. Accent palette and color
+scheme are mapped onto these by `lib/settings-mapper.ts`.
 
-**Indexes:**
-- `{ userId, topicSlug }` (unique)
-- `{ userId, levelId }`
-- `{ userId, status }`
+### `userprogresses`, `userachievements` — `models/UserProgress.ts`, `models/UserAchievement.ts`
 
----
+Older per-topic progress and achievement records, kept for existing data. They
+no longer affect XP.
 
-### 3. **UserAchievement Model** (`models/UserAchievement.ts`)
+### `revoked_sessions` — `src/server/models/RevokedSession.ts`
 
-Gamification system for user achievements and badges.
+`{ sid, expiresAt }`. Written on sign-out; sessions with a revoked `sid` are
+rejected. TTL index on `expiresAt`. **New.**
 
-**Fields:**
-```typescript
-{
-  userId: ObjectId (ref: User)
-  
-  // Achievement details
-  achievementId: string
-  title: string
-  description: string
-  category: 'completion' | 'streak' | 'speed' | 'mastery' | 'special'
-  icon: string
-  
-  // Progress
-  progress: number (0-100)
-  isUnlocked: boolean
-  unlockedAt?: Date
-  
-  // Rewards
-  xpReward: number
-  rarity: 'common' | 'rare' | 'epic' | 'legendary'
-}
-```
+### `securityratecounters` — `src/server/security/rate-limit.ts`
 
-**Indexes:**
-- `{ userId, achievementId }` (unique)
-- `{ userId, isUnlocked }`
+`{ _id: sha256(key + window), count, expiresAt }`. Fixed-window counters for
+rate limits; no raw IPs are stored. TTL index on `expiresAt`. **New.**
 
----
+## API
 
-### 4. **UserSettings Model** (`models/UserSettings.ts`)
+All routes except auth and the webhook require a signed-in user: the Auth.js
+session cookie, or `Authorization: Bearer <Noirly Identity access token>`.
+Cookie requests that change data must be same-origin and send
+`x-noirly-csrf: 1`. Bodies are validated with zod; errors are
+`{ "error": "<code or message>" }`. `/api/*` is limited to 300 requests per
+minute per IP.
 
-User preferences and application settings.
+### Auth and account
 
-**Fields:**
-```typescript
-{
-  userId: ObjectId (ref: User, unique)
-  
-  // Appearance
-  theme: 'dark' | 'light' | 'auto'
-  language: string
-  
-  // Notifications
-  emailNotifications: {
-    courseUpdates: boolean
-    achievements: boolean
-    weeklyProgress: boolean
-    marketing: boolean
-  }
-  
-  // Privacy
-  profileVisibility: 'public' | 'private'
-  showProgress: boolean
-  showAchievements: boolean
-  
-  // Learning preferences
-  dailyGoal: number (minutes, 5-480)
-  reminderTime?: string (HH:MM format)
-  autoPlayVideos: boolean
-  playbackSpeed: number (0.5, 0.75, 1, 1.25, 1.5, 2)
-  
-  // Accessibility
-  reducedMotion: boolean
-  highContrast: boolean
-  fontSize: 'small' | 'medium' | 'large'
-}
-```
+| Route | |
+|---|---|
+| `GET/POST /api/auth/*` | Auth.js (sign-in with provider `noirly`, callback, session, sign-out). |
+| `POST /api/identity/account-deleted` | Identity's account-deleted Security Event Token (RS256, verified against Identity's JWKS, `aud` = client id, 5-minute max age). Deletes all AlgoLab data for that `sub`. Idempotent. |
 
----
+The old `/api/auth/register`, `/login`, `/me`, `/logout`, password reset and
+email verification endpoints are removed.
 
-## 🔌 API Endpoints
+### Curriculum progress
 
-All endpoints require `Authorization: Bearer <token>` header.
+| Route | |
+|---|---|
+| `GET /api/progress` | Aggregated progress: completed/unlocked lessons, current lesson, level, XP, streak. |
+| `PATCH /api/progress` | `{ currentLesson }` — move the "continue" pointer. |
+| `POST /api/progress/complete` | `{ lessonId }` — completes the lesson. `403 lesson_locked` if not unlocked, `403 quiz_not_passed` without a passed attempt for this lesson in the last 24 hours. Unlocks the next lesson; XP only for non-templated quizzes. |
+| `GET /api/progress/export` | Everything AlgoLab stores for the learner, as a JSON download. |
 
-### **Authentication**
+### Quizzes and review
 
-#### `POST /api/auth/register`
-Register a new user.
-```json
-Request:
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "password": "password123"
-}
+| Route | |
+|---|---|
+| `GET /api/quiz/[lessonId]` | `{ lessonId, templated, passScore, questions: [{ id, question, options }] }` — no answers. `403 lesson_locked`. |
+| `POST /api/quiz/submit` | `{ lessonId, answers: [{ questionId, choiceIndex }] }` → `{ score, passed, correct, total, results, templated }`. Graded on the server, 70% passes. `403 lesson_locked`; rate limited per user. Records `lastPassedAttempt` and queues missed questions. |
+| `GET /api/review` | `{ due (up to 10 questions), dueCount, nextDueAt, total }`. |
+| `POST /api/review/answer` | `{ lessonId, questionId, choiceIndex }` → `{ correct, correctIndex, explanation, nextDueAt }`. Rate limited per user. |
 
-Response:
-{
-  "message": "Registration successful",
-  "userId": "..."
-}
-```
+### User
 
-#### `POST /api/auth/login`
-Login and get JWT token.
-```json
-Request:
-{
-  "emailOrUsername": "johndoe",
-  "password": "password123"
-}
-
-Response:
-{
-  "message": "Login successful",
-  "token": "eyJhbGci...",
-  "user": { ...enhanced user object... }
-}
-```
-
-#### `GET /api/auth/me`
-Get current authenticated user.
-```json
-Response:
-{
-  "user": {
-    "id": "...",
-    "username": "johndoe",
-    "email": "john@example.com",
-    "currentLevel": 1,
-    "xp": 0,
-    "streak": 0,
-    ...
-  }
-}
-```
-
-#### `POST /api/auth/logout`
-Logout (clears cookie if used).
-
----
-
-### **User Profile**
-
-#### `GET /api/user/profile`
-Get user profile.
-```json
-Response:
-{
-  "profile": {
-    "id": "...",
-    "username": "johndoe",
-    "firstName": "John",
-    "lastName": "Doe",
-    "avatar": "https://...",
-    "bio": "Learning DSA!",
-    "currentLevel": 5,
-    "xp": 1250,
-    "streak": 7,
-    ...
-  }
-}
-```
-
-#### `PATCH /api/user/profile`
-Update user profile.
-```json
-Request:
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "avatar": "https://...",
-  "bio": "Passionate about algorithms"
-}
-
-Response:
-{
-  "message": "Profile updated successfully",
-  "profile": { ...updated profile... }
-}
-```
-
----
-
-### **User Settings**
-
-#### `GET /api/user/settings`
-Get user settings (creates defaults if none exist).
-```json
-Response:
-{
-  "settings": {
-    "theme": "dark",
-    "dailyGoal": 30,
-    "emailNotifications": { ... },
-    ...
-  }
-}
-```
-
-#### `PATCH /api/user/settings`
-Update user settings.
-```json
-Request:
-{
-  "theme": "light",
-  "dailyGoal": 60,
-  "emailNotifications": {
-    "courseUpdates": true
-  }
-}
-
-Response:
-{
-  "message": "Settings updated successfully",
-  "settings": { ...updated settings... }
-}
-```
-
----
-
-### **User Progress**
-
-#### `GET /api/user/progress?levelId=1&topicSlug=bubble-sort`
-Get learning progress (supports filtering).
-```json
-Response:
-{
-  "progress": [
-    {
-      "levelId": 1,
-      "topicSlug": "bubble-sort",
-      "topicTitle": "Bubble Sort",
-      "status": "completed",
-      "progress": 100,
-      "score": 95,
-      "timeSpent": 1200,
-      "attempts": 2,
-      "isBookmarked": true,
-      ...
-    }
-  ]
-}
-```
-
-#### `POST /api/user/progress`
-Create or update progress.
-```json
-Request:
-{
-  "levelId": 1,
-  "topicSlug": "bubble-sort",
-  "topicTitle": "Bubble Sort",
-  "status": "in-progress",
-  "progress": 50,
-  "timeSpent": 300,
-  "score": 75
-}
-
-Response:
-{
-  "message": "Progress updated successfully",
-  "progress": { ...updated progress... }
-}
-```
-
----
-
-### **User Achievements**
-
-#### `GET /api/user/achievements?unlocked=true`
-Get achievements (filter by unlocked status).
-```json
-Response:
-{
-  "achievements": [
-    {
-      "achievementId": "first-completion",
-      "title": "First Steps",
-      "description": "Complete your first topic",
-      "category": "completion",
-      "icon": "emoji_events",
-      "isUnlocked": true,
-      "unlockedAt": "2026-06-04T...",
-      "xpReward": 50,
-      "rarity": "common"
-    }
-  ]
-}
-```
-
-#### `POST /api/user/achievements`
-Unlock an achievement.
-```json
-Request:
-{
-  "achievementId": "first-completion",
-  "title": "First Steps",
-  "description": "Complete your first topic",
-  "category": "completion",
-  "icon": "emoji_events",
-  "xpReward": 50,
-  "rarity": "common"
-}
-
-Response:
-{
-  "message": "Achievement unlocked!",
-  "achievement": { ...achievement details... },
-  "xpGained": 50
-}
-```
-
----
-
-## 🎯 Usage Examples
-
-### **Track Topic Progress**
-```typescript
-// When user starts a topic
-await fetch('/api/user/progress', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    levelId: 1,
-    topicSlug: 'bubble-sort',
-    topicTitle: 'Bubble Sort',
-    status: 'in-progress',
-    progress: 0,
-  }),
-});
-
-// Update progress as user learns
-await fetch('/api/user/progress', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    levelId: 1,
-    topicSlug: 'bubble-sort',
-    topicTitle: 'Bubble Sort',
-    progress: 75,
-    timeSpent: 600, // Will increment
-  }),
-});
-
-// Mark as completed
-await fetch('/api/user/progress', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    levelId: 1,
-    topicSlug: 'bubble-sort',
-    topicTitle: 'Bubble Sort',
-    status: 'completed',
-    progress: 100,
-    score: 95,
-  }),
-});
-```
-
-### **Update User Profile**
-```typescript
-const response = await fetch('/api/user/profile', {
-  method: 'PATCH',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    firstName: 'John',
-    lastName: 'Doe',
-    bio: 'Full-stack developer learning algorithms',
-  }),
-});
-```
-
-### **Unlock Achievement**
-```typescript
-const response = await fetch('/api/user/achievements', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    achievementId: '7-day-streak',
-    title: 'Week Warrior',
-    description: 'Maintain a 7-day learning streak',
-    category: 'streak',
-    icon: 'local_fire_department',
-    xpReward: 100,
-    rarity: 'rare',
-  }),
-});
-// User's XP automatically increases by xpReward amount
-```
-
----
-
-## 🔐 Redux Integration
-
-Enhanced user interface in Redux store:
-
-```typescript
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  isVerified: boolean;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-  bio?: string;
-  currentLevel: number;
-  xp: number;
-  streak: number;
-  lastActiveDate?: string;
-  role: 'user' | 'admin' | 'instructor';
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-Access in components:
-```typescript
-import { useAppSelector } from '@/app/store/hooks';
-
-const { user } = useAppSelector((state) => state.auth);
-console.log(user.currentLevel, user.xp, user.streak);
-```
-
----
-
-## ✅ Features
-
-- ✅ **Complete authentication** (register, login, email verification, password reset)
-- ✅ **JWT tokens** stored in localStorage with Redux
-- ✅ **User profiles** with avatar, bio, name
-- ✅ **Learning progress tracking** per topic
-- ✅ **Achievement system** with XP rewards
-- ✅ **User settings** for preferences
-- ✅ **Role-based access** (user/admin/instructor)
-- ✅ **Gamification** (levels, XP, streaks)
-- ✅ **Privacy controls** and notifications
+| Route | |
+|---|---|
+| `GET/PATCH /api/user/profile` | Profile fields. |
+| `GET/PATCH /api/user/settings` | Settings (defaults created on first read). |
+| `GET/POST /api/user/progress` | Legacy per-topic progress; `POST` no longer awards XP. |
+| `GET/POST /api/user/achievements` | Legacy achievements; a client-sent `xpReward` never changes XP. |
+| `GET /api/user/roadmap` | Legacy roadmap with per-topic progress. |

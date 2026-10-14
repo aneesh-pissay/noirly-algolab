@@ -1,166 +1,125 @@
-# Noirly AlgoLab Visualization Architecture
+# Noirly AlgoLab — architecture
 
-Complete implementation of the step-by-step algorithm visualization engine.
+How the app fits together. Feature status lives in
+[docs/FEATURES.md](docs/FEATURES.md); the data model and API in
+[DATABASE_DOCUMENTATION.md](DATABASE_DOCUMENTATION.md).
 
-## Architecture Overview
+## Layout
 
-### Core Engine Components
-
-1. **Types** (`src/core/engine/types.ts`)
-   - `AlgorithmStep`: Contract for every operation step
-   - `AlgorithmInput`: Input configuration
-   - `VisualizerState`: Playback state
-   - `Algorithm`: Algorithm metadata interface
-
-2. **Store** (`src/core/engine/store.ts`)
-   - Observer pattern implementation
-   - State management for playback controls
-   - Methods: `loadSteps()`, `nextStep()`, `previousStep()`, `play()`, `pause()`, `reset()`
-
-3. **Engine** (`src/core/engine/VisualizerEngine.ts`)
-   - Main orchestrator
-   - Algorithm registration and execution
-   - Playback timer management
-   - Singleton instance exported as `visualizerEngine`
-
-## Algorithm Implementations
-
-All algorithms follow the standardized contract:
-```typescript
-export function generateSteps(input: AlgorithmInput): AlgorithmStep[]
+```
+proxy.ts                 CSP nonce + security headers, cross-origin mutation check, API rate limit
+auth.ts                  Auth.js v5 instance (config in src/server/auth/config.ts)
+app/
+  layout.tsx             fonts, NoirlyHead/NoirlyExperience, theme bootstrap, AppProviders
+  page.tsx, login/, privacy/   public pages
+  (app)/                 signed-in pages inside the AppShell (dashboard, learn-path,
+                         visualizer/[lessonId], compare, progress, settings, …)
+  (app)/visual-lab/      standalone public demos
+  api/                   route handlers (see DATABASE_DOCUMENTATION.md)
+  components/visualizer/ lesson runtime: UniversalVisualizer, renderers, controls,
+                         InputPanel, PredictPanel, CodePanel, LessonQuizView
+  data/                  curriculum (318 lessons), lesson → algorithm routing, theory
+  lib/                   client helpers: custom input, predict, compare, engine state
+lib/                     shared server helpers: Mongo connection, curriculum progress,
+                         streaks, gamification, settings mapping
+models/                  Mongoose models (database noirly-codelab)
+src/
+  core/                  the visualization engine and every algorithm (unchanged)
+  components/            AppShell, theme, brand mark, app switcher, sign-out
+  features/              command palette, progress hooks
+  services/              client fetchers (TanStack Query)
+  server/
+    auth/                Identity OIDC config, account linking, requireUser, revoked sessions
+    quiz/                quiz bank: authored, derived-from-run and templated questions; grading
+    review/              spaced-review schedule
+    security/            request checks, Mongo-backed rate limits, body size limits
+    users/               account deletion
+e2e/                     Playwright suites (sessions minted with next-auth/jwt)
+tests/                   Vitest route and server tests
 ```
 
-### Sorting (5 algorithms)
-- **Bubble Sort** - O(n²) comparison-based sorting
-- **Selection Sort** - O(n²) minimum selection
-- **Insertion Sort** - O(n²) element insertion
-- **Merge Sort** - O(n log n) divide-and-conquer
-- **Quick Sort** - O(n log n) pivot partitioning
+## Request path
 
-### Searching (2 algorithms)
-- **Linear Search** - O(n) sequential search
-- **Binary Search** - O(log n) divide-and-conquer on sorted array
+1. `proxy.ts` runs for every request. Pages get a per-request nonce and CSP
+   (`script-src 'nonce-…' 'strict-dynamic'`) plus hardening headers; the root
+   layout reads the nonce from `headers()`, so pages render dynamically.
+   Mutating API calls with a cookie must be same-origin and carry
+   `x-noirly-csrf: 1`; `/api/*` is rate limited per IP (300/min).
+2. The proxy also redirects signed-out visitors of non-public pages to
+   `/login?next=…` (`src/server/auth/routes.ts`); signed-in pages live under
+   `app/(app)/` and share the AppShell.
+3. Route handlers call `requireUser()` (`src/server/auth/session.ts`), which
+   accepts either the Auth.js session cookie or an Identity access token
+   (`Authorization: Bearer`, verified at Identity's userinfo endpoint), and
+   returns AlgoLab's Mongo user id.
 
-### Patterns (2 algorithms)
-- **Two Pointer** - O(n) pointer movement pattern
-- **Sliding Window** - O(n) subarray operations
+## Sign-in (Noirly Identity)
 
-### Recursion (2 algorithms)
-- **Factorial** - O(n) call stack visualization
-- **Fibonacci** - O(2^n) exponential recursion tree
+- Auth.js v5, one OIDC provider `noirly` (PKCE + state + nonce,
+  `client_secret_post`), JWT sessions. Same pattern as Noirly Flow.
+- The `signIn` callback runs `linkOrCreateUser`: find the user by
+  `identitySub`; otherwise link an existing AlgoLab account with the same
+  email **only if Identity marks the email verified**; otherwise create one.
+- Each session carries a `sid`. Sign-out writes it to `revoked_sessions`, and
+  the session callback rejects revoked ids.
+- In development the cookies are `authjs.algolab.*` so apps on localhost don't
+  share sessions.
+- Identity's account-deleted Security Event Token (`POST
+  /api/identity/account-deleted`, verified against Identity's JWKS) deletes
+  the learner's AlgoLab data.
 
-### Trees (3 algorithms)
-- **DFS** - O(n) depth-first traversal
-- **BFS** - O(n) breadth-first level-order
-- **Traversals** - Inorder, Preorder, Postorder
+## Lessons and the visualizer
 
-### Graphs (3 algorithms)
-- **Graph DFS** - O(V + E) vertex exploration
-- **Graph BFS** - O(V + E) level-by-level traversal
-- **Dijkstra** - O(V²) shortest path algorithm
+- `app/data/curriculum.ts` defines tracks → levels → tiers → lessons.
+  `lessonRoutes.ts` maps each lesson to an engine algorithm id and its example
+  input; `/visualizer/<lessonId>` is the lesson page, and old
+  `/visualizer/<algorithmId>` links redirect to the first matching lesson.
+- `src/core` holds the `VisualizerEngine` singleton, its store and all
+  algorithms. Every algorithm is `generateSteps(input) → AlgorithmStep[]`.
+  It is not modified by the app; the UI wraps it:
+  - `app/lib/engineState.ts` exposes the engine through
+    `useSyncExternalStore` with a cached snapshot.
+  - `UniversalVisualizer` derives everything else (current step, code line,
+    predict prompt, share link) from that state, and picks a renderer
+    (array, stack, queue, tree, graph, generic) via `RendererFactory`.
+  - `app/lib/lessonInput.ts` parses, validates and size-caps custom input and
+    builds Random / Worst-case presets; `?input=` and `?step=` restore a
+    shared run.
+  - `app/lib/predict.ts` builds the "what happens next" choices from the next
+    step's action; `app/lib/compare.ts` runs two algorithms on one input and
+    counts steps, comparisons and writes.
 
-### Dynamic Programming (2 algorithms)
-- **Fibonacci DP** - O(n) with memoization
-- **0/1 Knapsack** - O(n*W) optimization problem
+## Quizzes, completion and review
 
-### Data Structures (3 implementations)
-- **Linked List** - Insert, delete, search operations
-- **Stack** - LIFO push/pop/peek
-- **Queue** - FIFO enqueue/dequeue/peek
+- `GET /api/quiz/[lessonId]` returns questions without answers.
+  `src/server/quiz/bank.ts` picks, per lesson: an authored set, else questions
+  derived from the lesson's own run (`derived.ts`) plus conceptual questions
+  (`challenges.ts`), else a templated complexity quiz.
+- `POST /api/quiz/submit` grades on the server (70% passes), refuses locked
+  lessons, stores `lastPassedAttempt`, and queues missed questions for review.
+- `POST /api/progress/complete` completes a lesson only if it is unlocked and
+  the last passed attempt is for that lesson (within 24 hours); then it unlocks the next lesson
+  and awards XP (none for templated quizzes). Clients never send XP.
+- `src/server/review/schedule.ts` re-asks a missed question after 1, 3 and 7
+  days; the dashboard shows due items (`/api/review`).
 
-## Step Structure
+## UI
 
-Every `AlgorithmStep` captures:
-- `id`: Unique step identifier
-- `category`: Algorithm category
-- `action`: Operation type (visit, compare, swap, etc.)
-- `description`: Human-readable explanation
-- `visualizationData`: Data for visual rendering
-- `highlights`: Elements to highlight in UI
-- `variables`: Current variable state
-- `memory`: Memory/stack state
-- `complexity`: Time and space complexity
-- `codeLine`: Corresponding line of code
+- `@noirly-dev/ui` (installed from GitHub Packages) provides tokens, fonts,
+  `AppShell` pieces, cards, buttons and the gold theme shared with Noirly Flow.
+  `app/globals.css` maps the old class names onto its variables; see
+  [docs/UI_MIGRATION.md](docs/UI_MIGRATION.md).
+- Settings (color scheme, accent, font size, contrast, motion) are applied as
+  attributes on `<html>` before paint and saved through `/api/user/settings`.
+- Gamification (XP, levels, streaks) is computed but not shown.
 
-## Usage
+## Testing and CI
 
-### Register and Execute Algorithm
-
-```typescript
-import { visualizerEngine, bubbleSort } from '@/core';
-
-// Register algorithm
-visualizerEngine.registerAlgorithm('bubble-sort', bubbleSort);
-
-// Execute with input
-const result = await visualizerEngine.execute('bubble-sort', {
-  array: [5, 2, 8, 1, 9]
-});
-
-// Control playback
-visualizerEngine.play();
-visualizerEngine.pause();
-visualizerEngine.nextStep();
-visualizerEngine.previousStep();
-```
-
-### Subscribe to State Changes
-
-```typescript
-import { visualizerStore } from '@/core';
-
-const unsubscribe = visualizerStore.subscribe((state) => {
-  console.log('Current step:', state.currentStepIndex);
-  console.log('Step data:', visualizerStore.getCurrentStep());
-});
-```
-
-## Features
-
-✅ **Step-by-step execution** - Every operation captured  
-✅ **Playback controls** - Play, pause, step forward/back  
-✅ **Variable tracking** - See all variables at each step  
-✅ **Memory visualization** - Stack, heap, data structure states  
-✅ **Complexity annotations** - Time and space complexity per step  
-✅ **Code correlation** - Links to actual code lines  
-✅ **Observer pattern** - React to state changes  
-✅ **Standardized interface** - Consistent API across all algorithms  
-
-## Files Created
-
-### Engine (3 files)
-- `src/core/engine/types.ts`
-- `src/core/engine/store.ts`
-- `src/core/engine/VisualizerEngine.ts`
-
-### Algorithms (17 files)
-- Sorting: 5 files
-- Searching: 2 files
-- Patterns: 2 files
-- Recursion: 2 files
-- Trees: 3 files
-- Graphs: 3 files
-
-### Dynamic Programming (2 files)
-- `fibonacciDP.ts`
-- `knapsack.ts`
-
-### Data Structures (3 files)
-- `linked-list/LinkedList.ts`
-- `stack/Stack.ts`
-- `queue/Queue.ts`
-
-### Registry
-- `src/core/index.ts` - Central exports
-
-**Total: 26 files** implementing complete visualization architecture
-
-## Next Steps
-
-1. Create React components to render visualizations
-2. Build UI controls for playback (play/pause/step buttons)
-3. Design visual representations for each data structure
-4. Add code editor panel with syntax highlighting
-5. Implement variable inspector panel
-6. Add complexity analysis panel
-7. Create learning content explaining each algorithm
+- `pnpm test` (Vitest): curriculum invariants and content ratchets, quiz bank,
+  grading and routes, auth config and linking, input parsing, predict,
+  compare, review schedule.
+- `pnpm test:e2e` (Playwright): builds and starts the app on :3103 against a
+  wiped `noirly-algolab-e2e` database; sessions are minted directly, so
+  Identity is not needed.
+- `.github/workflows/ci.yml`: lint, typecheck, unit tests, build, then e2e with
+  a MongoDB service.
