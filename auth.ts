@@ -72,11 +72,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      * the `user` object, which Auth.js hands to `jwt` next.
      */
     async signIn({ user, profile }) {
-      if (!user.id) return false;
+      // The Identity subject comes from the profile. `user.id` is NOT it:
+      // Auth.js replaces it with a fresh random UUID on every sign-in.
+      const sub = typeof profile?.sub === "string" ? profile.sub : null;
+      if (!sub) return false;
       try {
         const doc = await withDb(() =>
           linkOrCreateUser({
-            sub: user.id!,
+            sub,
             email: user.email ?? null,
             emailVerified: profile?.email_verified === true || String(profile?.email_verified) === "true",
             name: user.name ?? null,
@@ -93,7 +96,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, profile }) {
       if (user?.id) {
         token.userId = (user as { appUserId?: string }).appUserId;
-        token.identitySub = user.id;
         // A fresh id per sign-in, so sign-out can end exactly this session.
         token.sid = randomUUID();
       }

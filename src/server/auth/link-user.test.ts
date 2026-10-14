@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/models/User', () => ({ default: {} }));
 vi.mock('@/lib/user-collections', () => ({ initializeUserCollections: vi.fn() }));
 
-import { AccountLinkError, baseUsername, linkOrCreateUser, type IdentityProfile, type LinkDeps } from './link-user';
+import { AccountLinkError, baseUsername, isStaleIdentitySub, linkOrCreateUser, type IdentityProfile, type LinkDeps } from './link-user';
 
 type Row = { _id: string; username: string; email: string; identitySub?: string; isVerified?: boolean };
 
@@ -14,8 +14,8 @@ function memoryDeps(rows: Row[]): LinkDeps & { rows: Row[]; initialized: string[
     initialized,
     findBySub: async (sub) => rows.find((r) => r.identitySub === sub) ?? null,
     findByEmail: async (email) => rows.find((r) => r.email === email) ?? null,
-    link: async (userId, sub) => {
-      const row = rows.find((r) => r._id === userId && (!r.identitySub || r.identitySub === sub));
+    link: async (userId, sub, _image, replacing) => {
+      const row = rows.find((r) => r._id === userId && (!r.identitySub || r.identitySub === sub || r.identitySub === replacing));
       if (!row) return null;
       row.identitySub = sub;
       row.isVerified = true;
@@ -106,5 +106,21 @@ describe('baseUsername', () => {
   });
   it('pads very short handles', () => {
     expect(baseUsername({ email: 'a@example.com', name: null })).toBe('learnera');
+  });
+
+  it('repairs an account linked to a per-sign-in UUID instead of the Identity subject', async () => {
+    const stale = '0b6f3c1e-9a2d-4c7b-8e5f-1a2b3c4d5e6f';
+    expect(isStaleIdentitySub(stale)).toBe(true);
+    expect(isStaleIdentitySub(profile().sub)).toBe(false);
+    const deps = memoryDeps([{ _id: 'u1', username: 'ada', email: 'ada@example.com', identitySub: stale }]);
+    const user = await linkOrCreateUser(profile(), deps);
+    expect(user._id).toBe('u1');
+    expect(deps.rows[0].identitySub).toBe(profile().sub);
+    expect(deps.rows).toHaveLength(1);
+  });
+
+  it('still needs a verified email to repair a stale link', async () => {
+    const deps = memoryDeps([{ _id: 'u1', username: 'ada', email: 'ada@example.com', identitySub: '0b6f3c1e-9a2d-4c7b-8e5f-1a2b3c4d5e6f' }]);
+    await expect(linkOrCreateUser(profile({ emailVerified: false }), deps)).rejects.toMatchObject({ code: 'email_unverified' });
   });
 });

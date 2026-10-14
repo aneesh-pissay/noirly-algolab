@@ -22,7 +22,8 @@ type LinkedUser = Pick<IUser, 'username' | 'email'> & { _id: unknown };
 export interface LinkDeps {
   findBySub(sub: string): Promise<LinkedUser | null>;
   findByEmail(email: string): Promise<(LinkedUser & { identitySub?: string }) | null>;
-  link(userId: string, sub: string, image: string | null): Promise<LinkedUser | null>;
+  /** Sets `identitySub` unless another subject claimed the account meanwhile; `replacing` may be overwritten. */
+  link(userId: string, sub: string, image: string | null, replacing?: string): Promise<LinkedUser | null>;
   usernameTaken(username: string): Promise<boolean>;
   create(input: { username: string; email: string; identitySub: string; isVerified: boolean; avatar?: string; firstName?: string; lastName?: string }): Promise<LinkedUser>;
   initializeCollections(userId: string): Promise<void>;
@@ -31,10 +32,18 @@ export interface LinkDeps {
 const mongoDeps: LinkDeps = {
   findBySub: (sub) => User.findOne({ identitySub: sub }),
   findByEmail: (email) => User.findOne({ email }),
-  link: (userId, sub, image) =>
+  link: (userId, sub, image, replacing) =>
     User.findOneAndUpdate(
       // Only claim an account no other Identity user has linked meanwhile.
-      { _id: userId, $or: [{ identitySub: { $exists: false } }, { identitySub: null }, { identitySub: sub }] },
+      {
+        _id: userId,
+        $or: [
+          { identitySub: { $exists: false } },
+          { identitySub: null },
+          { identitySub: sub },
+          ...(replacing ? [{ identitySub: replacing }] : []),
+        ],
+      },
       { $set: { identitySub: sub, isVerified: true, ...(image ? { avatar: image } : {}) } },
       { new: true },
     ),
@@ -42,6 +51,17 @@ const mongoDeps: LinkDeps = {
   create: (input) => User.create(input),
   initializeCollections: initializeUserCollections,
 };
+
+/**
+ * Noirly Identity subjects are Mongo ObjectIds (24 hex characters). Before
+ * the fix in auth.ts, sign-in stored Auth.js's per-sign-in random UUID
+ * instead, so every later sign-in looked like a different Noirly account.
+ * A UUID-shaped `identitySub` is that stale value, never a real subject, and
+ * may be replaced (still only with a verified email).
+ */
+export function isStaleIdentitySub(sub: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sub);
+}
 
 function isDuplicateKey(error: unknown): boolean {
   return (error as { code?: unknown })?.code === 11000;
@@ -94,9 +114,10 @@ export async function linkOrCreateUser(profile: IdentityProfile, deps: LinkDeps 
 
   const local = await deps.findByEmail(email);
   if (local) {
-    if (local.identitySub && local.identitySub !== profile.sub) throw new AccountLinkError('already_linked');
+    const stale = local.identitySub && isStaleIdentitySub(local.identitySub) ? local.identitySub : undefined;
+    if (local.identitySub && local.identitySub !== profile.sub && !stale) throw new AccountLinkError('already_linked');
     if (!profile.emailVerified) throw new AccountLinkError('email_unverified');
-    const linked = await deps.link(String(local._id), profile.sub, profile.image);
+    const linked = await deps.link(String(local._id), profile.sub, profile.image, stale);
     if (!linked) throw new AccountLinkError('already_linked');
     return linked;
   }
