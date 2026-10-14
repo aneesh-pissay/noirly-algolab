@@ -237,7 +237,7 @@ export default function LearningPathExplorer() {
                   'Every lesson pairs theory with an interactive visualizer',
                   'Progress tracking saves your place and unlocks the next lessons',
                 ]}
-                pathOverview="Start with the Beginner stage: its topics in all three tracks. Intermediate opens once that core is done, then Advanced."
+                pathOverview="Start with the Beginner stage: its topics in every track. Intermediate opens once that core is done, then Advanced."
                 totalLessons={countCurriculumLessons()}
               />
               <StagePath progress={progress} />
@@ -282,7 +282,8 @@ export default function LearningPathExplorer() {
                 totalLessons={countCurriculumLessons()}
               />
               <div className="grid gap-4 md:grid-cols-3">
-                {levels.map((level) => {
+                {/* A track may stop early (Patterns has no Advanced topics). */}
+                {levels.filter((level) => (track.topics[level]?.length ?? 0) > 0).map((level) => {
                   const count = track.topics[level]?.length ?? 0;
                   const unlocked = isLevelUnlocked(track.id, level, progress);
                   const levelInfo = getLevelTheory(level);
@@ -304,7 +305,7 @@ export default function LearningPathExplorer() {
                       <p className="mt-2 text-sm text-fg-2">{count} topics</p>
                       {!unlocked ? (
                         <p className="mt-2 text-xs text-fg-2">
-                          Opens after the {levels[levels.indexOf(level) - 1]} core in all three tracks
+                          Opens after the {levels[levels.indexOf(level) - 1]} core in every track
                         </p>
                       ) : null}
                       <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-fg-3">{levelInfo.overview}</p>

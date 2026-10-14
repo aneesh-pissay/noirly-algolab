@@ -44,11 +44,14 @@ export default function ProgressPage() {
   const breakdown = useMemo(
     () =>
       tracks.map((track) => {
-        const rows = levels.map((level) => {
-          const lessons = all.filter((l) => l.track === track.id && l.level === level);
-          const done = lessons.filter((l) => completed.has(l.id)).length;
-          return { level, done, total: lessons.length };
-        });
+        const rows = levels
+          .map((level) => {
+            const lessons = all.filter((l) => l.track === track.id && l.level === level);
+            const done = lessons.filter((l) => completed.has(l.id)).length;
+            return { level, done, total: lessons.length };
+          })
+          // A track may stop early (Patterns has no Advanced topics).
+          .filter((row) => row.total > 0);
         const done = rows.reduce((n, r) => n + r.done, 0);
         const total = rows.reduce((n, r) => n + r.total, 0);
         return { track, rows, done, total };
@@ -92,7 +95,7 @@ export default function ProgressPage() {
 
       <Card className="p-5">
         <h2 className="section-title">By stage</h2>
-        <p className="meta mt-1">Core lessons (Easy and Medium) across all three tracks. Each stage opens when the one before it is done.</p>
+        <p className="meta mt-1">Core lessons (Easy and Medium) across every track. Each stage opens when the one before it is done.</p>
         <ul className="mt-5 grid gap-5 md:grid-cols-3">
           {levels.map((level, index) => {
             const stage = getStageProgress(level, progress.completedLessons);
