@@ -135,3 +135,20 @@ html[data-high-contrast="true"] {
   --text-muted: var(--text);
   --hairline: var(--hairline-strong);
 }
+
+/* Sign-in busy overlay (BusyScreen), as in Noirly Flow. */
+@media (prefers-reduced-motion: no-preference) {
+  .busy-dots {
+    animation: busy-pulse 1.05s ease-in-out infinite;
+  }
+}
+
+@keyframes busy-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
