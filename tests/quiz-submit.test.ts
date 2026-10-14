@@ -74,3 +74,13 @@ describe('POST /api/quiz/submit', () => {
     expect(res.headers.get('Retry-After')).toBe('30');
   });
 });
+
+describe('POST /api/quiz/submit — spaced review', () => {
+  it('queues missed questions for review', async () => {
+    const answers = [right[0], ...wrong.slice(1)];
+    await POST(request({ lessonId: LESSON, answers }));
+    const queue = state.doc!.reviewQueue as { questionId: string; stage: number }[];
+    expect(queue.map((q) => q.questionId).sort()).toEqual(wrong.slice(1).map((a) => a.questionId).sort());
+    expect(queue.every((q) => q.stage === 0)).toBe(true);
+  });
+});

@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Card, PageContainer, PageHeader, StatCell, StatGroup } from '@noirly-dev/ui';
 import Breadcrumbs from '@/app/components/Breadcrumbs';
+import ReviewCard from '@/app/components/ReviewCard';
 import { useAuth } from '@/app/contexts/AuthContext';
 import {
   useProgressHydrated,
@@ -77,6 +78,8 @@ export default function DashboardPage() {
           </Link>
         </Card>
       )}
+
+      <ReviewCard />
 
       <StatGroup>
         <StatCell label="Completed" value={<span className="matrix-numeral">{completedCount}</span>} caption={`of ${allLessons.length} lessons`} />

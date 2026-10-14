@@ -8,6 +8,7 @@ import { readJsonBody } from '@/src/server/api/json';
 import { requireUser } from '@/src/server/auth/session';
 import { gradeQuiz, getLessonQuiz } from '@/src/server/quiz/bank';
 import { consumeRateLimit } from '@/src/server/security/rate-limit';
+import { addMissed } from '@/src/server/review/schedule';
 
 const SubmitSchema = z.object({
   lessonId: z.string().min(1).max(120),
@@ -44,10 +45,15 @@ export async function POST(request: Request) {
     }
 
     const grade = gradeQuiz(quiz, answers);
+    const missed = grade.results.filter((r) => !r.correct && r.chosenIndex !== null).map((r) => r.questionId);
+    if (missed.length) {
+      // Missed questions come back for spaced review (spec F8).
+      doc.reviewQueue = addMissed(doc.reviewQueue ?? [], lessonId, missed);
+    }
     if (grade.passed) {
       doc.lastPassedAttempt = { lessonId, score: grade.score, templated: quiz.templated, passedAt: new Date() };
-      await doc.save();
     }
+    if (missed.length || grade.passed) await doc.save();
 
     return NextResponse.json({ ...grade, templated: quiz.templated });
   } catch (error) {
