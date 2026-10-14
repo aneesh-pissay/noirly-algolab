@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore, type ReactNode } from "react";
 import {
   ChartColumn,
+  Columns2,
   ExternalLink,
   FlaskConical,
   LayoutDashboard,
@@ -20,6 +21,7 @@ import { BrandMark } from "@/src/components/BrandMark";
 import { iconFor } from "@/src/components/Icon";
 import { SignOutButton } from "@/src/components/SignOutButton";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { AppSwitcher } from "@/src/components/AppSwitcher";
 import { ShellBreadcrumbProvider, useShellCrumbs } from "@/src/components/ShellBreadcrumb";
 import { useUIStore } from "@/src/stores/ui";
 import { CommandPalette } from "@/src/features/command-palette/CommandPalette";
@@ -60,6 +62,7 @@ const LEARN: NavEntry[] = tracks.map((track) => ({
 
 const EXPLORE: NavEntry[] = [
   { href: "/visual-lab", label: "Visual Lab", icon: FlaskConical, active: prefix("/visual-lab") },
+  { href: "/compare", label: "Compare", icon: Columns2, active: prefix("/compare") },
   { href: "/settings", label: "Settings", icon: Settings, active: prefix("/settings") },
 ];
 
@@ -190,7 +193,12 @@ function ShellFrame({ children }: { children: ReactNode }) {
           breadcrumb: crumbs ?? undefined,
           brand: <p className="font-display text-sm font-semibold tracking-tight">Noirly AlgoLab</p>,
           onCommandClick: () => useUIStore.getState().setCommandPaletteOpen(true),
-          actions: <ThemeToggle size="sm" />,
+          actions: (
+            <>
+              <AppSwitcher />
+              <ThemeToggle size="sm" />
+            </>
+          ),
         }}
       >
         <div id="main" className="flex min-h-0 flex-1 flex-col">
