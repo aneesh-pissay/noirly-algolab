@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     const levelId = searchParams.get('levelId');
     const topicSlug = searchParams.get('topicSlug');
 
-    let query: any = { userId: userId };
-    if (levelId) query.levelId = parseInt(levelId);
+    const query: { userId: string; levelId?: number; topicSlug?: string } = { userId };
+    if (levelId) query.levelId = parseInt(levelId, 10);
     if (topicSlug) query.topicSlug = topicSlug;
 
     const progress = await UserProgress.find(query).sort({ lastAccessedAt: -1 });
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> & { $inc?: Record<string, number> } = {
       userId: userId,
       levelId,
       topicSlug,

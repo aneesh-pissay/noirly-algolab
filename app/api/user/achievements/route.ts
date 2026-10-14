@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const unlocked = searchParams.get('unlocked');
 
-    let query: any = { userId: userId };
+    const query: { userId: string; isUnlocked?: boolean } = { userId };
     if (unlocked === 'true') query.isUnlocked = true;
     if (unlocked === 'false') query.isUnlocked = false;
 

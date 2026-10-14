@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { lessonHref } from '@/app/data/lessonRoutes';
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
@@ -154,63 +153,42 @@ export default function LearningPathExplorer() {
   const searchParams = useSearchParams();
   const hydrated = useProgressHydrated();
   const progress = useProgressData();
-  const [view, setView] = useState<View>('tracks');
-  const [activeTrack, setActiveTrack] = useState<TrackId | null>(null);
-  const [activeLevel, setActiveLevel] = useState<Level | null>(null);
-  const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    const track = searchParams.get('track') as TrackId | null;
-    const level = searchParams.get('level') as Level | null;
-    const topicId = searchParams.get('topic');
+  // The URL is the source of truth (?track=&level=&topic=), so the sidebar's
+  // track links, breadcrumbs and the browser's back button all agree.
+  const trackParam = searchParams.get('track');
+  const levelParam = searchParams.get('level');
+  const topicParam = searchParams.get('topic');
+  const activeTrack = tracks.find((t) => t.id === trackParam)?.id ?? null;
+  const activeLevel = activeTrack && levels.includes(levelParam as Level) ? (levelParam as Level) : null;
+  const activeTopic: Topic | null =
+    (activeTrack && activeLevel && tracks.find((t) => t.id === activeTrack)?.topics[activeLevel]?.find((t) => t.id === topicParam)) || null;
+  const view: View = activeTopic ? 'topic-detail' : activeLevel ? 'topics' : activeTrack ? 'levels' : 'tracks';
 
-    if (track && levels.includes(level as Level) && topicId) {
-      const t = tracks.find((x) => x.id === track);
-      const topic = t?.topics[level as Level]?.find((x) => x.id === topicId);
-      if (t && topic) {
-        setActiveTrack(track);
-        setActiveLevel(level as Level);
-        setActiveTopic(topic);
-        setView('topic-detail');
-        return;
-      }
-    }
-
-    if (track && levels.includes(level as Level)) {
-      setActiveTrack(track);
-      setActiveLevel(level as Level);
-      setView('topics');
-      return;
-    }
-
-    if (track) {
-      setActiveTrack(track);
-      setView('levels');
-    }
-  }, [searchParams]);
+  const go = (next: { track?: TrackId; level?: Level; topic?: string }) => {
+    const query = new URLSearchParams();
+    if (next.track) query.set('track', next.track);
+    if (next.level) query.set('level', next.level);
+    if (next.topic) query.set('topic', next.topic);
+    router.push(query.size ? `/learn-path?${query}` : '/learn-path');
+  };
 
   const track = tracks.find((t) => t.id === activeTrack);
   const topics = track && activeLevel ? track.topics[activeLevel] ?? [] : [];
 
-  const breadcrumbItems = useMemo(() => {
-    const items = [{ label: 'Dashboard', href: '/dashboard' }, { label: 'Learning Path' }];
-    if (track) items.push({ label: track.title });
-    if (activeLevel) items.push({ label: activeLevel });
-    if (activeTopic) items.push({ label: activeTopic.name });
-    return items;
-  }, [track, activeLevel, activeTopic]);
+  const breadcrumbItems = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Learning Path', ...(track ? { href: '/learn-path' } : {}) },
+    ...(track ? [{ label: track.title, ...(activeLevel ? { href: `/learn-path?track=${track.id}` } : {}) }] : []),
+    ...(track && activeLevel ? [{ label: activeLevel, ...(activeTopic ? { href: `/learn-path?track=${track.id}&level=${activeLevel}` } : {}) }] : []),
+    ...(activeTopic ? [{ label: activeTopic.name }] : []),
+  ];
 
   const goBack = () => {
-    if (view === 'topic-detail') {
-      setView('topics');
-      setActiveTopic(null);
-    } else if (view === 'topics') {
-      setView('levels');
-      setActiveLevel(null);
-    } else if (view === 'levels') {
-      setView('tracks');
-      setActiveTrack(null);
-    }
+    if (view === 'topic-detail') go({ track: activeTrack!, level: activeLevel! });
+    else if (view === 'topics') go({ track: activeTrack! });
+    else go({});
   };
 
   if (!hydrated) {
@@ -268,8 +246,7 @@ export default function LearningPathExplorer() {
                 <TiltCard key={t.id}>
                 <button
                   onClick={() => {
-                    setActiveTrack(t.id);
-                    setView('levels');
+                    go({ track: t.id });
                   }}
                   className="surface surface-interactive spotlight grain focusable group h-full w-full rounded-[var(--r-lg)] p-6 text-left"
                 >
@@ -311,8 +288,7 @@ export default function LearningPathExplorer() {
                       key={level}
                       disabled={!unlocked}
                       onClick={() => {
-                        setActiveLevel(level);
-                        setView('topics');
+                        go({ track: track.id, level });
                       }}
                       className={`surface grain focusable rounded-[var(--r-lg)] p-5 text-left ${
                         unlocked ? 'surface-interactive' : 'cursor-not-allowed opacity-60'
@@ -353,8 +329,7 @@ export default function LearningPathExplorer() {
                       <button
                         disabled={!topicUnlocked && index > 0}
                         onClick={() => {
-                          setActiveTopic(topic);
-                          setView('topic-detail');
+                          go({ track: track.id, level: activeLevel, topic: topic.id });
                         }}
                         className={`surface grain focusable flex w-full items-center justify-between rounded-[var(--r-lg)] px-5 py-4 text-left ${
                           topicUnlocked ? 'surface-interactive' : 'cursor-not-allowed opacity-60'
