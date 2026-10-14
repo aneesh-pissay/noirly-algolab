@@ -21,7 +21,6 @@ import { BrandMark } from "@/src/components/BrandMark";
 import { iconFor } from "@/src/components/Icon";
 import { SignOutButton } from "@/src/components/SignOutButton";
 import { ThemeControls } from "@/src/components/ThemeControls";
-import { AppSwitcher } from "@/src/components/AppSwitcher";
 import { ShellBreadcrumbProvider, useShellCrumbs } from "@/src/components/ShellBreadcrumb";
 import { useUIStore } from "@/src/stores/ui";
 import { CommandPalette } from "@/src/features/command-palette/CommandPalette";
@@ -192,12 +191,7 @@ function ShellFrame({ children }: { children: ReactNode }) {
         header={{
           breadcrumb: crumbs ?? undefined,
           brand: <p className="font-display text-sm font-semibold tracking-tight">Noirly AlgoLab</p>,
-          actions: (
-            <>
-              <AppSwitcher />
-              <ThemeControls size="sm" />
-            </>
-          ),
+          actions: <ThemeControls size="sm" />,
         }}
       >
         <div id="main" className="flex min-h-0 flex-1 flex-col">

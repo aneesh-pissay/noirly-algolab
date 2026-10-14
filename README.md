@@ -61,7 +61,7 @@ add `noirly-algolab=https://<host>/api/identity/account-deleted` to Identity's
 | `AUTH_NOIRLY_ISSUER` | Identity URL. Must be HTTPS in production. |
 | `AUTH_NOIRLY_CLIENT_ID` / `AUTH_NOIRLY_CLIENT_SECRET` | The client registered above |
 | `NEXT_PUBLIC_IDENTITY_URL` | Identity URL for "Manage account" links |
-| `NEXT_PUBLIC_FLOW_URL` | Optional: Noirly Flow URL for the app switcher |
+| `NEXT_PUBLIC_FLOW_URL` | Optional: Noirly Flow URL for the landing page's Noirly apps tiles |
 | `TRUSTED_CLIENT_IP_HEADER` | Header carrying the client IP for rate limits (default `x-forwarded-for`) |
 | `GITHUB_TOKEN` | Token with `read:packages`, to install `@noirly-dev/ui` |
 

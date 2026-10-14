@@ -53,7 +53,7 @@ the older status notes (`docs/SORTING_STATUS.md`, the counts in the previous
   "Manage account" (Identity); progress export as JSON.
 - **UI**: shared `@noirly-dev/ui` (Noirly Flow's gold theme, fonts, shell,
   effects), mobile drawer, accessible tabs, labelled controls, live step
-  announcements, reduced-motion support, Noirly app switcher.
+  announcements, reduced-motion support, Flow's palette picker in the header.
 
 ## Not done yet
 

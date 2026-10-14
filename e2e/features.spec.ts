@@ -53,18 +53,11 @@ test('progress can be exported as JSON', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Download my progress/ })).toHaveAttribute('href', '/api/progress/export');
 });
 
-test('the app switcher lists the other Noirly apps', async ({ page }) => {
-  await page.goto('/dashboard');
-  await page.getByRole('button', { name: 'Noirly apps' }).click();
-  await expect(page.getByRole('link', { name: /Noirly Flow/ })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('link', { name: /Noirly Flow/ })).toBeHidden();
-});
-
-test('the header offers palettes like Noirly Flow, without a search box', async ({ page }) => {
+test('the header offers palettes like Noirly Flow, without a search box or app switcher', async ({ page }) => {
   await page.goto('/dashboard');
   const banner = page.getByRole('banner');
   await expect(banner.getByRole('button', { name: 'Open command palette' })).toHaveCount(0);
+  await expect(banner.getByRole('button', { name: 'Noirly apps' })).toHaveCount(0);
   await banner.getByRole('button', { name: 'Choose color palette' }).click();
   await page.getByRole('radio', { name: 'Ocean Blue' }).click();
   await banner.getByRole('button', { name: 'Choose color palette' }).click();
