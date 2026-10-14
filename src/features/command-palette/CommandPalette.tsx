@@ -19,6 +19,7 @@ const PAGES = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/progress", label: "Progress" },
   { href: "/visual-lab", label: "Visual Lab" },
+  { href: "/compare", label: "Compare algorithms" },
   { href: "/settings", label: "Settings" },
   ...tracks.map((track) => ({ href: `/learn-path?track=${track.id}`, label: `Learn path · ${track.title}` })),
 ];
