@@ -1,3 +1,5 @@
+import { authoredTheory } from './authoredTheory';
+
 export interface AlgorithmTheory {
   id: string;
   overview: string;
@@ -8,7 +10,7 @@ export interface AlgorithmTheory {
   cons: string[];
 }
 
-export const algorithmTheory: Record<string, AlgorithmTheory> = {
+const lessonTheory: Record<string, AlgorithmTheory> = {
   'reverse-array': {
     id: 'reverse-array',
     overview: 'The Reverse Array algorithm uses two pointers starting from opposite ends of the array, swapping elements as they move towards each other until they meet in the middle.',
@@ -156,3 +158,6 @@ export const algorithmTheory: Record<string, AlgorithmTheory> = {
     ]
   }
 };
+
+/** Theory keyed by Visual Lab slug or algorithm id (see lessonTheory.ts for aliases). */
+export const algorithmTheory: Record<string, AlgorithmTheory> = { ...lessonTheory, ...authoredTheory };

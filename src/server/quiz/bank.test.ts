@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getAllLessons } from '@/app/data/curriculum';
 import { getLessonQuiz, gradeQuiz, toPublicQuiz } from './bank';
 
 describe('lesson quiz bank', () => {
@@ -9,7 +10,7 @@ describe('lesson quiz bank', () => {
   it('uses the lesson’s own complexity, not the first lesson sharing its algorithm', () => {
     // pat-bfs and the Algorithms-track BFS lesson share graph-bfs.
     const quiz = getLessonQuiz('pat-bfs')!;
-    const timeQ = quiz.questions.find((q) => q.id.endsWith('-q-time'))!;
+    const timeQ = quiz.questions.find((q) => q.id.endsWith('-time'))!;
     expect(timeQ.options[timeQ.correctAnswer]).toBe('O(V+E)');
   });
 
@@ -62,5 +63,34 @@ describe('gradeQuiz', () => {
     const grade = gradeQuiz(quiz, wrong);
     expect(grade.results[0]).toMatchObject({ correct: false, correctIndex: quiz.questions[0].correctAnswer });
     expect(grade.results[0].explanation.length).toBeGreaterThan(0);
+  });
+});
+
+describe('every lesson quiz', () => {
+  const lessons = getAllLessons();
+
+  it('is well formed: unique ids and options, answer in range', () => {
+    for (const lesson of lessons) {
+      const quiz = getLessonQuiz(lesson.id)!;
+      expect(quiz.questions.length, lesson.id).toBeGreaterThanOrEqual(3);
+      const ids = quiz.questions.map((q) => q.id);
+      expect(new Set(ids).size, lesson.id).toBe(ids.length);
+      for (const q of quiz.questions) {
+        expect(new Set(q.options).size, `${lesson.id} ${q.id}`).toBe(q.options.length);
+        expect(q.correctAnswer, `${lesson.id} ${q.id}`).toBeGreaterThanOrEqual(0);
+        expect(q.correctAnswer, `${lesson.id} ${q.id}`).toBeLessThan(q.options.length);
+      }
+    }
+  });
+
+  it('asks about the lesson’s own run for most lessons (F2)', () => {
+    const derived = lessons.filter((l) => getLessonQuiz(l.id)!.source === 'derived').length;
+    expect(derived / lessons.length).toBeGreaterThan(0.7);
+  });
+
+  it('adds hand-written concept questions for high-traffic lessons', () => {
+    const quiz = getLessonQuiz('sort-quick')!;
+    expect(quiz.questions.some((q) => q.id === 'c-quick-worst')).toBe(true);
+    expect(quiz.questions.some((q) => q.id.endsWith('-d-state'))).toBe(true);
   });
 });

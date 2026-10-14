@@ -11,8 +11,8 @@ const lessons = getAllLessons();
  * count may only go down: lower these numbers when authoring content, and
  * the test fails if a change adds more generated lessons.
  */
-const MAX_GENERATED_THEORY = 315;
-const MAX_TEMPLATED_QUIZZES = 316;
+const MAX_GENERATED_THEORY = 281;
+const MAX_TEMPLATED_QUIZZES = 83;
 
 describe('curriculum', () => {
   it('has unique lesson ids', () => {

@@ -7,7 +7,9 @@ import { visualizerEngine } from '@/src/core/engine/VisualizerEngine';
 import { bootstrapVisualizerEngine } from '@/app/lib/engineBootstrap';
 import { findLessonById } from '@/app/data/curriculum';
 import { resolveTheoryKey } from '@/app/data/lessonTheory';
-import { algorithmChallenges, type ChallengeQuestion } from './challenges';
+import { algorithmChallenges, conceptQuestions, type ChallengeQuestion } from './challenges';
+import { deriveQuestions } from './derived';
+import { detectInputSpec, tryRun, worstCaseInput, type LessonInput } from '@/app/lib/lessonInput';
 
 export type QuizQuestion = ChallengeQuestion;
 
@@ -20,8 +22,10 @@ export interface PublicQuizQuestion {
 export interface LessonQuiz {
   lessonId: string;
   questions: QuizQuestion[];
-  /** Generated from complexity facts rather than written for the lesson (spec B7). */
+  /** Generic complexity questions, not about this lesson's run (spec B7): no XP. */
   templated: boolean;
+  /** Where the questions came from. */
+  source: 'authored' | 'derived' | 'templated';
 }
 
 export const PASS_SCORE = 70;
@@ -83,16 +87,58 @@ function templatedQuestions(lessonId: string, name: string, time: string, space:
   ];
 }
 
+function describeInput(input: LessonInput): string {
+  const parts: string[] = [];
+  if (input.array) parts.push(`the array [${input.array.join(', ')}]`);
+  if (input.target !== undefined) parts.push(`target ${input.target}`);
+  if (input.k !== undefined) parts.push(`k = ${input.k}`);
+  if (input.str) parts.push(`"${input.str}"`);
+  if (input.text) parts.push(`the text "${input.text}"`);
+  if (input.pattern) parts.push(`pattern "${input.pattern}"`);
+  if (input.edges) parts.push(`the edges ${input.edges.map(([u, v]) => `${u}-${v}`).join(', ')}`);
+  return parts.join(', ');
+}
+
 export function getLessonQuiz(lessonId: string): LessonQuiz | null {
   const ctx = findLessonById(lessonId);
   if (!ctx) return null;
   const { algorithmId } = ctx.lesson;
   const authored = algorithmChallenges[resolveTheoryKey(algorithmId)] ?? algorithmChallenges[algorithmId];
-  if (authored && authored.length >= 3) return { lessonId, questions: authored, templated: false };
+  if (authored && authored.length >= 3) return { lessonId, questions: authored, templated: false, source: 'authored' };
+
+  const algorithm = lessonAlgorithm(algorithmId);
+  let steps: ReturnType<Algorithm['generateSteps']> = [];
+  try {
+    steps = algorithm?.generateSteps({}) ?? [];
+  } catch {
+    steps = [];
+  }
+  // A very short example (a search that hits on the first probe) gives little
+  // to ask about: use the lesson's worst-case input instead, and name it so
+  // learners can reproduce it with the custom input panel.
+  let inputNote: string | null = null;
+  if (algorithm && steps.length < 6) {
+    const spec = detectInputSpec(algorithmId, algorithm);
+    const input = spec ? worstCaseInput(spec) : null;
+    const longer = input ? tryRun(algorithm, input) : null;
+    if (input && longer && longer.length > steps.length && longer.length <= 80) {
+      steps = longer;
+      inputNote = describeInput(input);
+    }
+  }
+  const derived = deriveQuestions(lessonId, ctx.lesson.name, ctx.lesson.time, steps, inputNote);
+  const concepts = conceptQuestions[algorithmId] ?? [];
+  if (derived) return { lessonId, questions: [...derived, ...concepts].slice(0, 6), templated: false, source: 'derived' };
+  if (concepts.length >= 2) {
+    const fallback = templatedQuestions(lessonId, ctx.lesson.name, ctx.lesson.time, ctx.lesson.space, algorithm).slice(0, 2);
+    return { lessonId, questions: [...concepts, ...fallback], templated: false, source: 'authored' };
+  }
+
   return {
     lessonId,
-    questions: templatedQuestions(lessonId, ctx.lesson.name, ctx.lesson.time, ctx.lesson.space, lessonAlgorithm(algorithmId)),
+    questions: templatedQuestions(lessonId, ctx.lesson.name, ctx.lesson.time, ctx.lesson.space, algorithm),
     templated: true,
+    source: 'templated',
   };
 }
 
