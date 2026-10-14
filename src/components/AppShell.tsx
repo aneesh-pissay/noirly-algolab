@@ -20,7 +20,7 @@ import { tracks, type TrackId } from "@/app/data/curriculum";
 import { BrandMark } from "@/src/components/BrandMark";
 import { iconFor } from "@/src/components/Icon";
 import { SignOutButton } from "@/src/components/SignOutButton";
-import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { ThemeControls } from "@/src/components/ThemeControls";
 import { AppSwitcher } from "@/src/components/AppSwitcher";
 import { ShellBreadcrumbProvider, useShellCrumbs } from "@/src/components/ShellBreadcrumb";
 import { useUIStore } from "@/src/stores/ui";
@@ -192,11 +192,10 @@ function ShellFrame({ children }: { children: ReactNode }) {
         header={{
           breadcrumb: crumbs ?? undefined,
           brand: <p className="font-display text-sm font-semibold tracking-tight">Noirly AlgoLab</p>,
-          onCommandClick: () => useUIStore.getState().setCommandPaletteOpen(true),
           actions: (
             <>
               <AppSwitcher />
-              <ThemeToggle size="sm" />
+              <ThemeControls size="sm" />
             </>
           ),
         }}

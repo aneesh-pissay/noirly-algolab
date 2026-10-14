@@ -11,9 +11,6 @@ export default function SiteFooter() {
         </span>
         <nav aria-label="Footer" className="flex flex-wrap items-center gap-4">
           <span className="meta">Theory · Visualize · Quiz</span>
-          <Link href="/visual-lab" className="meta underline-offset-4 hover:text-[var(--text)] hover:underline">
-            Visual Lab
-          </Link>
           <Link href="/privacy" className="meta underline-offset-4 hover:text-[var(--text)] hover:underline">
             Privacy policy
           </Link>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowUpRight, BookOpen, CirclePlay, Route, TrendingUp } from "lucide-react";
@@ -94,11 +93,8 @@ export default async function LandingPage() {
               <p className="lede mt-5">
                 Step-by-step animations, synced code tracing and {totalLessons} structured lessons, from arrays to graphs.
               </p>
-              <div className="mt-9 flex w-full max-w-sm flex-col gap-3 sm:flex-row">
-                <NoirlyLoginButton className="flex-1" />
-                <Link href="/visual-lab" className="btn btn-ghost btn-lg flex-1">
-                  Try the Visual Lab
-                </Link>
+              <div className="mt-9 w-full max-w-sm">
+                <NoirlyLoginButton />
               </div>
               <p className="meta mt-4">Sign in with your Noirly account — email or Google</p>
             </div>

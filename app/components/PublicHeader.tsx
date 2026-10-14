@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { BrandMark } from '@/src/components/BrandMark';
-import { ThemeToggle } from '@/src/components/ThemeToggle';
+import { ThemeControls } from '@/src/components/ThemeControls';
 import { useAuth } from '../contexts/AuthContext';
 
 /** Header for public pages (landing, privacy, login). Mirrors Flow's marketing header. */
@@ -23,9 +23,6 @@ export default function PublicHeader() {
           </span>
         </Link>
         <div className="flex shrink-0 items-center gap-2">
-          <Link href="/visual-lab" className="chip hidden sm:inline-flex">
-            Visual Lab
-          </Link>
           {!loading && user ? (
             <Link href="/dashboard" className="btn btn-ghost btn-sm">
               Dashboard
@@ -35,7 +32,7 @@ export default function PublicHeader() {
               Sign in
             </Link>
           )}
-          <ThemeToggle size="sm" />
+          <ThemeControls size="sm" />
         </div>
       </div>
     </header>
