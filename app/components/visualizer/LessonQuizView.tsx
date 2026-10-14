@@ -18,6 +18,8 @@ interface Props {
   /** Saves completion; the server checks the graded attempt itself. */
   onComplete: () => void | Promise<void>;
   isCompleting: boolean;
+  /** Predict-mode score from the visualizer, shown with the quiz (spec F3). */
+  predictScore?: { correct: number; total: number } | null;
 }
 
 /**
@@ -33,6 +35,7 @@ export default function LessonQuizView({
   onPass,
   onComplete,
   isCompleting,
+  predictScore = null,
 }: Props) {
   const [quiz, setQuiz] = useState<PublicQuiz | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -127,6 +130,11 @@ export default function LessonQuizView({
             {grade.correct} / {grade.total} correct
           </p>
           <p className="matrix-numeral mt-3 text-4xl text-accent">{grade.score}%</p>
+          {predictScore ? (
+            <p className="meta mt-2">
+              Predict mode: {predictScore.correct}/{predictScore.total} steps predicted correctly
+            </p>
+          ) : null}
           <p className="mt-2 text-sm text-fg-2">
             {grade.passed
               ? lessonDone
@@ -196,6 +204,7 @@ export default function LessonQuizView({
         <h2 className="section-title">{lessonName} — quiz</h2>
         <p className="text-sm text-fg-2">
           Question {currentIndex + 1} of {questions.length} · pass with {quiz.passScore}%+
+          {predictScore ? ` · your predictions: ${predictScore.correct}/${predictScore.total}` : ''}
         </p>
         <div
           className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2"

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Link2 } from 'lucide-react';
 import { visualizerEngine } from '@/src/core/engine/VisualizerEngine';
 import { Algorithm, AlgorithmStep, VisualizerState } from '@/src/core/engine/types';
@@ -17,6 +18,8 @@ import VisualizerControls from './VisualizerControls';
 import CompletionModal from './CompletionModal';
 import LessonStepBar, { canAccessStep, type LessonStep } from './LessonStepBar';
 import InputPanel from './InputPanel';
+import PredictPanel from './PredictPanel';
+import { buildPrediction, type Prediction } from '@/app/lib/predict';
 import { SPEEDS } from './VisualizerControls';
 import {
   decodeInput,
@@ -27,6 +30,7 @@ import {
   type LessonInput,
 } from '@/app/lib/lessonInput';
 import { useUIStore } from '@/src/stores/ui';
+import { useEngineState } from '@/app/lib/engineState';
 import LessonTheoryView from './LessonTheoryView';
 import LessonQuizView from './LessonQuizView';
 
@@ -41,88 +45,87 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export default function UniversalVisualizer({ lessonId }: Props) {
   const { animationSpeed } = useSettings();
-  const [algorithm, setAlgorithm] = useState<Algorithm | null>(null);
-  const [state, setState] = useState<VisualizerState | null>(null);
-  const [currentStep, setCurrentStep] = useState<AlgorithmStep | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [completionResult, setCompletionResult] = useState<CompleteLessonResult | null>(null);
-  const [activeStep, setActiveStep] = useState<LessonStep>('theory');
-  const [stepProgress, setStepProgress] = useState({ visualize: false, theory: false, quiz: false });
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [customInput, setCustomInput] = useState<LessonInput | null>(null);
-  const [inputError, setInputError] = useState<string | null>(null);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
-
-  const setCurrentLesson = useProgressStore((s) => s.setCurrentLesson);
-  const completeLesson = useProgressStore((s) => s.completeLesson);
-  const isLessonCompleted = useProgressStore((s) => s.isLessonCompleted);
 
   // Route by lesson id: several tracks reuse an algorithm, but each lesson has
   // its own difficulty, complexity notes, breadcrumb and progress entry.
   const lessonCtx = findLessonById(lessonId);
   const algorithmId = lessonCtx?.lesson.algorithmId ?? lessonId;
+  const algorithm = useMemo<Algorithm | null>(() => {
+    bootstrapVisualizerEngine();
+    return visualizerEngine.getAlgorithm(algorithmId) ?? null;
+  }, [algorithmId]);
+
+  // A shared link (?input=…&step=…) opens on exactly that state (spec F6).
+  const searchParams = useSearchParams();
+  const [shared] = useState(() => {
+    const input = decodeInput(searchParams.get('input'));
+    return { input: input && algorithm && tryRun(algorithm, input) ? input : null, step: searchParams.get('step') };
+  });
+  const openedFromLink = Boolean(shared.input || shared.step);
+  const initialRunOk = useMemo(() => {
+    if (!algorithm) return false;
+    try {
+      return algorithm.generateSteps(shared.input ?? {}).length > 0;
+    } catch {
+      return false;
+    }
+  }, [algorithm, shared]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [completionResult, setCompletionResult] = useState<CompleteLessonResult | null>(null);
+  const [activeStep, setActiveStep] = useState<LessonStep>(openedFromLink ? 'visualize' : 'theory');
+  const [stepProgress, setStepProgress] = useState({ visualize: false, theory: openedFromLink, quiz: false });
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [customInput, setCustomInput] = useState<LessonInput | null>(shared.input);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
+  const [predictMode, setPredictMode] = useState(false);
+  const [pending, setPending] = useState<{ prediction: Prediction; chosen: number | null } | null>(null);
+  const [predictScore, setPredictScore] = useState({ correct: 0, total: 0 });
+
+  const setCurrentLesson = useProgressStore((s) => s.setCurrentLesson);
+  const completeLesson = useProgressStore((s) => s.completeLesson);
+  const isLessonCompleted = useProgressStore((s) => s.isLessonCompleted);
+
   const lessonName = lessonCtx?.lesson.name ?? algorithm?.name ?? lessonId;
   const alreadyCompleted = isLessonCompleted(lessonId);
+  // A completed lesson opens with every step available.
+  const progressView = useMemo(
+    () => (alreadyCompleted ? { visualize: true, theory: true, quiz: true } : stepProgress),
+    [alreadyCompleted, stepProgress],
+  );
+
+  const engine = useEngineState();
+  const ready = engine.algorithm === algorithmId && engine.totalSteps > 0;
+  const state: VisualizerState | null = ready ? engine : null;
+  const currentStep: AlgorithmStep | null = ready ? (engine.steps[engine.currentStep] ?? null) : null;
   const atFinalStep = state ? state.currentStep >= state.totalSteps - 1 : false;
+  const error = !algorithm ? `Algorithm "${algorithmId}" is not registered.` : !initialRunOk ? 'This visualization could not be generated.' : null;
 
   const theory = useMemo(() => getLessonTheory(lessonId, algorithm, lessonName), [lessonId, algorithm, lessonName]);
 
   useEffect(() => {
-    bootstrapVisualizerEngine();
-
-    const algo = visualizerEngine.getAlgorithm(algorithmId);
-    if (!algo) {
-      setError(`Algorithm "${algorithmId}" is not registered.`);
-      return;
-    }
-
-    setAlgorithm(algo);
-    setError(null);
-
-    // A shared link (?input=…&step=…) opens on exactly that state (spec F6).
-    const params = new URLSearchParams(window.location.search);
-    const shared = decodeInput(params.get('input'));
-    const sharedInput = shared && tryRun(algo, shared) ? shared : null;
-    try {
-      visualizerEngine.execute(algorithmId, sharedInput ?? {});
-      visualizerEngine.setSpeed(animationSpeed);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to execute algorithm');
-      return;
-    }
-    setCustomInput(sharedInput);
-    const sharedStep = parseStepParam(params.get('step'), visualizerEngine.getState().totalSteps);
-    if (sharedStep !== null || sharedInput) {
-      if (sharedStep !== null) visualizerEngine.goToStep(sharedStep);
-      setStepProgress((prev) => ({ ...prev, theory: true }));
-      setActiveStep('visualize');
-    }
-
-    const unsubscribe = visualizerEngine.subscribe((newState) => {
-      setState(newState);
-      setCurrentStep(visualizerEngine.getCurrentStep());
+    if (!algorithm || !initialRunOk) return;
+    // Reaching the last frame unlocks the quiz; it stays unlocked after a reset.
+    const unsubscribe = visualizerEngine.subscribe((s) => {
+      if (s.algorithm === algorithmId && s.totalSteps > 0 && s.currentStep >= s.totalSteps - 1) {
+        setStepProgress((prev) => (prev.visualize ? prev : { ...prev, visualize: true }));
+      }
     });
-
-    setState(visualizerEngine.getState());
-    setCurrentStep(visualizerEngine.getCurrentStep());
+    visualizerEngine.execute(algorithmId, shared.input ?? {});
+    const sharedStep = parseStepParam(shared.step, visualizerEngine.getState().totalSteps);
+    if (sharedStep !== null) visualizerEngine.goToStep(sharedStep);
     void setCurrentLesson(lessonId);
 
     return () => {
       unsubscribe();
       visualizerEngine.pause();
     };
-  }, [algorithmId, lessonId, setCurrentLesson]);
+  }, [algorithm, algorithmId, initialRunOk, lessonId, setCurrentLesson, shared]);
 
   useEffect(() => {
     visualizerEngine.setSpeed(animationSpeed);
   }, [animationSpeed]);
-
-  useEffect(() => {
-    if (atFinalStep) {
-      setStepProgress((prev) => ({ ...prev, visualize: true }));
-    }
-  }, [atFinalStep]);
 
   const inputSpec = useMemo(() => (algorithm ? detectInputSpec(algorithmId, algorithm) : null), [algorithmId, algorithm]);
 
@@ -141,6 +144,39 @@ export default function UniversalVisualizer({ lessonId }: Props) {
     },
     [algorithm, algorithmId],
   );
+
+  // Predict mode (spec F3): "next" first asks what will happen, then shows it.
+  const requestNext = useCallback(() => {
+    const engineState = visualizerEngine.getState();
+    if (!predictMode || engineState.currentStep >= engineState.totalSteps - 1) {
+      visualizerEngine.nextStep();
+      return;
+    }
+    if (pending) return;
+    const prediction = buildPrediction(engineState.steps, engineState.currentStep);
+    if (prediction) setPending({ prediction, chosen: null });
+    else visualizerEngine.nextStep();
+  }, [predictMode, pending]);
+
+  const choosePrediction = useCallback((index: number) => {
+    setPending((current) => {
+      if (!current || current.chosen !== null) return current;
+      const correct = index === current.prediction.correctIndex;
+      setPredictScore((score) => ({ correct: score.correct + (correct ? 1 : 0), total: score.total + 1 }));
+      return { ...current, chosen: index };
+    });
+  }, []);
+
+  const revealPrediction = useCallback(() => {
+    setPending(null);
+    visualizerEngine.nextStep();
+  }, []);
+
+  const togglePredict = useCallback(() => {
+    visualizerEngine.pause();
+    setPending(null);
+    setPredictMode((on) => !on);
+  }, []);
 
   const share = useCallback(async () => {
     const url = shareUrl(window.location.href, customInput, visualizerEngine.getState().currentStep);
@@ -164,7 +200,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
 
       const tab = ({ '1': 'theory', '2': 'visualize', '3': 'quiz' } as const)[event.key as '1' | '2' | '3'];
       if (tab) {
-        if (canAccessStep(tab, stepProgress)) setActiveStep(tab);
+        if (canAccessStep(tab, progressView)) setActiveStep(tab);
         return;
       }
       if (activeStep !== 'visualize') return;
@@ -175,7 +211,11 @@ export default function UniversalVisualizer({ lessonId }: Props) {
           if (onControl) return; // Space already activates the focused control.
           event.preventDefault();
           if (engineState.isPlaying) visualizerEngine.pause();
-          else visualizerEngine.play();
+          else if (!predictMode) visualizerEngine.play();
+          break;
+        case 'p':
+        case 'P':
+          togglePredict();
           break;
         case 'ArrowLeft':
           if (target?.closest('[role="tab"]')) return;
@@ -185,7 +225,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
         case 'ArrowRight':
           if (target?.closest('[role="tab"]')) return;
           event.preventDefault();
-          visualizerEngine.nextStep();
+          requestNext();
           break;
         case 'r':
         case 'R':
@@ -202,19 +242,13 @@ export default function UniversalVisualizer({ lessonId }: Props) {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activeStep, stepProgress]);
+  }, [activeStep, progressView, predictMode, requestNext, togglePredict]);
 
   const lessonMeta = getLessonMeta(lessonId);
   const nextLesson = lessonMeta?.next ? getLessonMeta(lessonMeta.next) : null;
   const learnPathHref = lessonCtx
     ? `/learn-path?track=${lessonCtx.track.id}&level=${lessonCtx.level}&topic=${lessonCtx.topic.id}`
     : '/learn-path';
-
-  useEffect(() => {
-    if (alreadyCompleted) {
-      setStepProgress({ visualize: true, theory: true, quiz: true });
-    }
-  }, [alreadyCompleted]);
 
   if (error) {
     return (
@@ -281,7 +315,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
 
       <LessonStepBar
         active={activeStep}
-        completed={stepProgress}
+        completed={progressView}
         onStepClick={setActiveStep}
       />
 
@@ -309,11 +343,23 @@ export default function UniversalVisualizer({ lessonId }: Props) {
               speed={state.speed}
               onPlay={() => visualizerEngine.play()}
               onPause={() => visualizerEngine.pause()}
-              onNext={() => visualizerEngine.nextStep()}
+              onNext={requestNext}
               onPrevious={() => visualizerEngine.previousStep()}
               onReset={() => visualizerEngine.reset()}
               onSpeedChange={(s) => visualizerEngine.setSpeed(s)}
+              playDisabled={predictMode}
+              predictMode={predictMode}
+              onTogglePredict={togglePredict}
+              predictScore={predictScore}
             />
+            {pending ? (
+              <PredictPanel
+                prediction={pending.prediction}
+                chosen={pending.chosen}
+                onChoose={choosePrediction}
+                onContinue={revealPrediction}
+              />
+            ) : null}
             {atFinalStep && (
               <div className="flex flex-col gap-3 rounded-[var(--r-lg)] bg-accent-soft px-4 py-3 shadow-[inset_0_0_0_1px_var(--hairline)] sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-fg">
@@ -331,7 +377,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="meta hidden sm:block" id="visualizer-shortcuts">
-                Space play/pause · ←/→ step · R reset · [ ] speed · 1/2/3 tabs · / search
+                Space play/pause · ←/→ step · R reset · [ ] speed · P predict · 1/2/3 tabs · / search
               </p>
               {!inputSpec ? (
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => void share()}>
@@ -359,7 +405,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
           <LessonTheoryView
             theory={theory}
             lessonName={lessonName}
-            theoryViewed={stepProgress.theory}
+            theoryViewed={progressView.theory}
             onContinue={handleTheoryContinue}
           />
         </div>
@@ -374,6 +420,7 @@ export default function UniversalVisualizer({ lessonId }: Props) {
             nextLesson={nextLesson}
             learnPathHref={learnPathHref}
             onPass={handleQuizPass}
+            predictScore={predictScore.total > 0 ? predictScore : null}
             onComplete={handleComplete}
             isCompleting={isCompleting}
           />

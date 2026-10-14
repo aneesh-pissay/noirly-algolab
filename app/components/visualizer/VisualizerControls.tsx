@@ -13,6 +13,11 @@ interface Props {
   onPrevious: () => void;
   onReset: () => void;
   onSpeedChange: (speed: number) => void;
+  /** Predict mode steps one at a time, so autoplay is off. */
+  playDisabled?: boolean;
+  predictMode?: boolean;
+  onTogglePredict?: () => void;
+  predictScore?: { correct: number; total: number };
 }
 
 export const SPEEDS = [0.5, 1, 2];
@@ -31,6 +36,10 @@ export default function VisualizerControls({
   onPrevious,
   onReset,
   onSpeedChange,
+  playDisabled = false,
+  predictMode = false,
+  onTogglePredict,
+  predictScore,
 }: Props) {
   const shown = totalSteps > 0 ? currentStep + 1 : 0;
   const progress = totalSteps > 0 ? (shown / totalSteps) * 100 : 0;
@@ -84,9 +93,10 @@ export default function VisualizerControls({
         <button
           type="button"
           onClick={isPlaying ? onPause : onPlay}
+          disabled={playDisabled}
           aria-label={isPlaying ? 'Pause' : 'Play'}
           aria-keyshortcuts="Space"
-          className="focusable flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-110"
+          className="focusable flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-ink transition hover:brightness-110 disabled:opacity-40"
         >
           {isPlaying ? <Pause size={18} aria-hidden /> : <Play size={18} className="ml-0.5" aria-hidden />}
         </button>
@@ -104,6 +114,26 @@ export default function VisualizerControls({
           <RotateCcw size={16} aria-hidden />
         </button>
       </div>
+      {onTogglePredict ? (
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 border-t border-line pt-3">
+          <button
+            type="button"
+            onClick={onTogglePredict}
+            aria-pressed={predictMode}
+            aria-keyshortcuts="P"
+            className={`focusable rounded-full px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] transition ${
+              predictMode ? 'bg-accent-soft text-fg shadow-[inset_0_0_0_1px_var(--accent)]' : 'text-fg-2 shadow-[inset_0_0_0_1px_var(--hairline)] hover:text-fg'
+            }`}
+          >
+            Predict mode {predictMode ? 'on' : 'off'}
+          </button>
+          {predictMode && predictScore ? (
+            <span className="meta">
+              Predictions {predictScore.correct}/{predictScore.total}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

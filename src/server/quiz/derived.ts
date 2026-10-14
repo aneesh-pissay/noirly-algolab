@@ -10,6 +10,7 @@
  */
 import type { AlgorithmAction, AlgorithmStep } from '@/src/core/engine/types';
 import type { ChallengeQuestion } from './challenges';
+import { ACTION_LABELS } from '@/app/lib/actionLabels';
 
 /** Keys whose value is "the data" of a step, in order of preference. */
 const PRIMARY_KEYS = ['array', 'nums', 'values', 'stack', 'queue', 'deque', 'sorted', 'merged', 'heap', 'inorder', 'list', 'dist', 'result', 'string'];
@@ -29,46 +30,6 @@ const KEY_NAMES: Record<string, string> = {
   dist: 'distance table',
   result: 'result',
   string: 'string',
-};
-
-export const ACTION_LABELS: Partial<Record<AlgorithmAction, string>> = {
-  compare: 'Compare two values',
-  swap: 'Swap two elements',
-  'move-pointer': 'Move a pointer',
-  visit: 'Visit the next element',
-  traverse: 'Traverse to the next node',
-  place: 'Write a value into its place',
-  insert: 'Insert a value',
-  delete: 'Remove a value',
-  push: 'Push onto the stack',
-  pop: 'Pop from the stack',
-  enqueue: 'Enqueue a value',
-  dequeue: 'Dequeue a value',
-  calculate: 'Compute a running value',
-  merge: 'Merge two parts',
-  partition: 'Partition around a pivot',
-  shift: 'Shift elements over',
-  rotate: 'Rotate elements',
-  count: 'Count occurrences',
-  divide: 'Split the problem in half',
-  found: 'Report the answer',
-  'not-found': 'Report that nothing matched',
-  choose: 'Choose a candidate',
-  backtrack: 'Undo the last choice (backtrack)',
-  heapify: 'Restore the heap order',
-  initialize: 'Set up the starting state',
-  search: 'Check the middle element',
-  'search-left': 'Continue in the left half',
-  'search-right': 'Continue in the right half',
-  relax: 'Relax an edge',
-  'find-position': 'Find the insert position',
-  'set-gap': 'Choose the next gap',
-  'update-gap': 'Shrink the gap',
-  distribute: 'Distribute into buckets',
-  'sort-bucket': 'Sort a bucket',
-  'process-digit': 'Process the next digit',
-  'heap-build': 'Build the heap',
-  flip: 'Flip a prefix',
 };
 
 const FALLBACK_ACTIONS: AlgorithmAction[] = ['compare', 'swap', 'move-pointer', 'place', 'found', 'push', 'pop'];
