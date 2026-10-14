@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { BrandMark } from '@/src/components/BrandMark';
-import { ThemeToggle } from '@/src/components/ThemeToggle';
+import { ThemeControls } from '@/src/components/ThemeControls';
 import { useAuth } from '../contexts/AuthContext';
 
 /** Header for public pages (landing, privacy, login). Mirrors Flow's marketing header. */
@@ -32,7 +32,7 @@ export default function PublicHeader() {
               Sign in
             </Link>
           )}
-          <ThemeToggle size="sm" />
+          <ThemeControls size="sm" />
         </div>
       </div>
     </header>

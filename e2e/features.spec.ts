@@ -60,3 +60,15 @@ test('the app switcher lists the other Noirly apps', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.getByRole('link', { name: /Noirly Flow/ })).toBeHidden();
 });
+
+test('the header offers palettes like Noirly Flow, without a search box', async ({ page }) => {
+  await page.goto('/dashboard');
+  const banner = page.getByRole('banner');
+  await expect(banner.getByRole('button', { name: 'Open command palette' })).toHaveCount(0);
+  await banner.getByRole('button', { name: 'Choose color palette' }).click();
+  await page.getByRole('radio', { name: 'Ocean Blue' }).click();
+  await banner.getByRole('button', { name: 'Choose color palette' }).click();
+  await expect(page.getByRole('radio', { name: 'Ocean Blue' })).toHaveAttribute('aria-checked', 'true');
+  // The sidebar search and Ctrl K still open the command palette.
+  await expect(page.getByRole('button', { name: 'Search lessons' })).toBeVisible();
+});
