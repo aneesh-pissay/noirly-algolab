@@ -75,20 +75,28 @@ describe('curriculum', () => {
     expect(ids).not.toContain('queue-task-scheduler');
   });
 
-  it('teaches each algorithm at most once per track', () => {
-    const repeats: string[] = [];
-    for (const track of tracks) {
-      const seen = new Map<string, string>();
-      for (const level of levels)
-        for (const topic of track.topics[level])
-          for (const difficulty of difficulties)
-            for (const lesson of topic.lessons[difficulty]) {
-              const first = seen.get(lesson.algorithmId);
-              if (first) repeats.push(`${track.id}: ${first} and ${lesson.id}`);
-              else seen.set(lesson.algorithmId, lesson.id);
-            }
-    }
+  /**
+   * The same problem seen from a pattern angle: a Patterns lesson may reuse a
+   * data-structure lesson's visualizer only when it is listed here.
+   */
+  const PATTERN_ANGLE_REUSE = [
+    'array-reverse',
+    'array-merge-sorted',
+    'array-dutch-flag',
+    'string-palindrome-check',
+    'linked-list-middle',
+    'linked-list-detect-cycle',
+  ];
+
+  it('teaches each algorithm once, apart from listed pattern-angle reuses', () => {
+    const byAlgorithm = new Map<string, string[]>();
+    for (const lesson of lessons) byAlgorithm.set(lesson.algorithmId, [...(byAlgorithm.get(lesson.algorithmId) ?? []), lesson.id]);
+    const repeats = [...byAlgorithm].filter(([id, ids]) => ids.length > 1 && !PATTERN_ANGLE_REUSE.includes(id));
     expect(repeats).toEqual([]);
+    for (const id of PATTERN_ANGLE_REUSE) {
+      const tracksUsing = byAlgorithm.get(id)!.map((lessonId) => findLessonById(lessonId)!.track.id).sort();
+      expect(tracksUsing, id).toEqual(['data-structures', 'patterns']);
+    }
   });
 
   it.each([

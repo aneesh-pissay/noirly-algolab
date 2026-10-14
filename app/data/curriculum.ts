@@ -154,7 +154,6 @@ export const tracks: Track[] = [
               lesson('stack-reverse-str', 'Reverse String', 'stack-reverse-string-using-stack', 'Medium', 'O(n)', 'O(n)'),
               lesson('stack-valid-parens', 'Valid Parentheses', 'stack-valid-parentheses', 'Medium', 'O(n)', 'O(n)'),
               lesson('stack-min', 'Min Stack', 'stack-min-stack', 'Medium', 'O(1)', 'O(n)'),
-              lesson('stack-nge', 'Next Greater Element', 'stack-next-greater-element', 'Medium', 'O(n)', 'O(n)'),
             ],
             Hard: [
               lesson('stack-decode', 'Decode String', 'stack-decode-string', 'Hard', 'O(n)', 'O(n)'),
@@ -579,9 +578,7 @@ export const tracks: Track[] = [
           name: 'Graph Algorithms',
           description: 'Shortest paths, MST, and advanced graph theory.',
           lessons: {
-            Easy: [
-              lesson('ga-components', 'Connected Components', 'graph-connected-components', 'Easy', 'O(V+E)', 'O(V)'),
-            ],
+            Easy: [],
             Medium: [
               lesson('ga-dijkstra', 'Dijkstra', 'graph-dijkstra', 'Medium', 'O(E log V)', 'O(V)'),
               lesson('ga-bellman', 'Bellman-Ford', 'graph-bellman-ford', 'Medium', 'O(V·E)', 'O(V)'),
