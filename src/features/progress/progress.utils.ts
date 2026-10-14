@@ -210,7 +210,7 @@ function getNextLevelFirstLesson(track: Track, currentLevel: Level): LessonMeta 
 /**
  * A topic's core: its Easy and Medium lessons. Finishing the core opens the
  * next topic; the Hard tier stays open as a challenge. Several Beginner
- * topics end in advanced problems (KMP, Manacher, LFU Cache, N-Queens), so
+ * topics end in advanced problems (LFU Cache, Reverse K Group, Find Duplicate), so
  * requiring them before the next topic or stage would block the path.
  */
 export const CORE_DIFFICULTIES = ['Easy', 'Medium'] as const;
@@ -341,7 +341,7 @@ export function resolveUnlocksOnComplete(
  * unlocks.
  */
 export function reconcileUnlocks<T extends UserProgress>(progress: T): T {
-  let state: T = progress;
+  let state: T = withCurrentLessonKeys(progress);
   for (const id of progress.completedLessons) {
     const unlocks = resolveUnlocksOnComplete(id, state);
     if (unlocks.newlyUnlocked.length === 0) continue;
@@ -353,6 +353,26 @@ export function reconcileUnlocks<T extends UserProgress>(progress: T): T {
     };
   }
   return state;
+}
+
+/**
+ * Tier and topic keys include the level, so moving a topic or lesson to
+ * another level leaves saved keys pointing at the old place. Re-derive them
+ * from the lessons already open, but only in stages the learner has reached,
+ * so a lesson moved to a later level (KMP → Advanced) does not open that stage.
+ */
+function withCurrentLessonKeys<T extends UserProgress>(progress: T): T {
+  const unlockedTiers = new Set(progress.unlockedTiers);
+  const unlockedTopics = new Set(progress.unlockedTopics);
+  const reached = new Map(levels.map((level) => [level, isStageUnlocked(level, progress)]));
+  for (const id of new Set([...progress.unlockedLessons, ...progress.completedLessons])) {
+    const m = getLessonMeta(id);
+    if (!m || !reached.get(m.level)) continue;
+    unlockedTiers.add(tierKey(m.track, m.level, m.category, m.difficulty));
+    unlockedTopics.add(topicKey(m.track, m.level, m.category));
+  }
+  if (unlockedTiers.size === progress.unlockedTiers.length && unlockedTopics.size === progress.unlockedTopics.length) return progress;
+  return { ...progress, unlockedTiers: [...unlockedTiers], unlockedTopics: [...unlockedTopics] };
 }
 
 export function updateStreak(lastActiveDate: string | null, streak: number): { streak: number; lastActiveDate: string } {

@@ -60,7 +60,6 @@ export const tracks: Track[] = [
             Medium: [
               lesson('array-rotate', 'Rotate', 'array-rotate', 'Medium', 'O(n)', 'O(1)'),
               lesson('array-prefix-sum', 'Prefix Sum', 'array-prefix-sum', 'Medium', 'O(n)', 'O(n)'),
-              lesson('array-two-sum', 'Two Sum', 'array-two-sum', 'Medium', 'O(n)', 'O(n)'),
               lesson('array-kadane', 'Kadane', 'array-kadane', 'Medium', 'O(n)', 'O(1)'),
               lesson('array-merge-sorted', 'Merge Sorted', 'array-merge-sorted', 'Medium', 'O(n+m)', 'O(1)'),
               lesson('array-dutch-flag', 'Dutch Flag', 'array-dutch-flag', 'Medium', 'O(n)', 'O(1)'),
@@ -69,15 +68,13 @@ export const tracks: Track[] = [
               lesson('array-product', 'Product Except Self', 'array-product-except-self', 'Hard', 'O(n)', 'O(1)'),
               lesson('array-intervals', 'Merge Intervals', 'array-merge-intervals', 'Hard', 'O(n log n)', 'O(n)'),
               lesson('array-next-perm', 'Next Permutation', 'array-next-permutation', 'Hard', 'O(n)', 'O(1)'),
-              lesson('array-rain', 'Trapping Rain Water', 'array-rain-water', 'Hard', 'O(n)', 'O(1)'),
-              lesson('array-histogram', 'Largest Rectangle', 'array-histogram-area', 'Hard', 'O(n)', 'O(n)'),
             ],
           },
         },
         {
           id: 'strings',
           name: 'Strings',
-          description: 'Text manipulation, matching, and advanced string algorithms.',
+          description: 'Text traversal, comparison, and in-place manipulation.',
           lessons: {
             Easy: [
               lesson('string-traversal', 'Traversal', 'string-traversal', 'Easy', 'O(n)', 'O(1)'),
@@ -91,21 +88,16 @@ export const tracks: Track[] = [
               lesson('string-compress', 'Compression', 'string-compression', 'Medium', 'O(n)', 'O(n)'),
               lesson('string-lcp', 'Longest Common Prefix', 'string-longest-common-prefix', 'Medium', 'O(n·m)', 'O(1)'),
               lesson('string-substring', 'Substring Search', 'string-substring-search', 'Medium', 'O(n·m)', 'O(1)'),
-              lesson('string-group-anagrams', 'Group Anagrams', 'string-group-anagrams', 'Medium', 'O(n·k)', 'O(n·k)'),
             ],
             Hard: [
               lesson('string-lps', 'Longest Palindromic Substring', 'string-longest-palindromic-substring', 'Hard', 'O(n²)', 'O(1)'),
-              lesson('string-min-window', 'Minimum Window', 'string-minimum-window-substring', 'Hard', 'O(n)', 'O(1)'),
-              lesson('string-rabin-karp', 'Rabin-Karp', 'string-rabin-karp', 'Hard', 'O(n+m)', 'O(m)'),
-              lesson('string-kmp', 'KMP', 'string-kmp', 'Hard', 'O(n+m)', 'O(m)'),
-              lesson('string-manacher', 'Manacher', 'string-manacher', 'Hard', 'O(n)', 'O(n)'),
             ],
           },
         },
         {
           id: 'hashmap',
           name: 'HashMap',
-          description: 'Key-value lookups, frequency maps, and cache designs.',
+          description: 'Key-value lookups, frequency maps, and prefix-sum counting.',
           lessons: {
             Easy: [
               lesson('hashmap-create', 'Create', 'hashmap-create', 'Easy', 'O(1)', 'O(n)'),
@@ -121,9 +113,6 @@ export const tracks: Track[] = [
             ],
             Hard: [
               lesson('hashmap-subarray-k', 'Subarray Sum K', 'hashmap-subarray-sum-equals-k', 'Hard', 'O(n)', 'O(n)'),
-              lesson('hashmap-top-k', 'Top K Frequent', 'hashmap-top-k-frequent-elements', 'Hard', 'O(n log k)', 'O(n)'),
-              lesson('hashmap-lru', 'LRU Cache', 'hashmap-lru-cache', 'Hard', 'O(1)', 'O(n)'),
-              lesson('hashmap-lfu', 'LFU Cache', 'hashmap-lfu-cache', 'Hard', 'O(log n)', 'O(n)'),
               lesson('hashmap-design', 'Design HashMap', 'hashmap-design-hashmap', 'Hard', 'O(1)', 'O(n)'),
             ],
           },
@@ -154,7 +143,7 @@ export const tracks: Track[] = [
         {
           id: 'stack',
           name: 'Stack',
-          description: 'LIFO structures for parsing, monotonic patterns, and undo flows.',
+          description: 'LIFO structures for parsing, matching, and undo flows.',
           lessons: {
             Easy: [
               lesson('stack-push', 'Push', 'stack-push-element', 'Easy', 'O(1)', 'O(1)'),
@@ -168,10 +157,7 @@ export const tracks: Track[] = [
               lesson('stack-nge', 'Next Greater Element', 'stack-next-greater-element', 'Medium', 'O(n)', 'O(n)'),
             ],
             Hard: [
-              lesson('stack-daily-temp', 'Daily Temperatures', 'stack-daily-temperatures', 'Hard', 'O(n)', 'O(n)'),
               lesson('stack-decode', 'Decode String', 'stack-decode-string', 'Hard', 'O(n)', 'O(n)'),
-              lesson('stack-histogram', 'Largest Histogram', 'stack-largest-rectangle-histogram', 'Hard', 'O(n)', 'O(n)'),
-              lesson('stack-max-rect', 'Maximal Rectangle', 'stack-maximal-rectangle', 'Hard', 'O(rows·cols)', 'O(cols)'),
               lesson('stack-expr', 'Expression Parser', 'stack-expression-parser', 'Hard', 'O(n)', 'O(n)'),
             ],
           },
@@ -179,7 +165,7 @@ export const tracks: Track[] = [
         {
           id: 'queue',
           name: 'Queue',
-          description: 'FIFO processing, BFS foundations, and scheduling patterns.',
+          description: 'FIFO processing, circular buffers, and double-ended queues.',
           lessons: {
             Easy: [
               lesson('queue-enqueue', 'Enqueue', 'queue-enqueue-element', 'Easy', 'O(1)', 'O(1)'),
@@ -191,22 +177,16 @@ export const tracks: Track[] = [
               lesson('queue-circular', 'Circular Queue', 'queue-circular-queue', 'Medium', 'O(1)', 'O(n)'),
               lesson('queue-stack-via-queue', 'Stack via Queue', 'queue-implement-stack-using-queue', 'Medium', 'O(n)', 'O(n)'),
               lesson('queue-reverse', 'Reverse Queue', 'queue-reverse-queue', 'Medium', 'O(n)', 'O(n)'),
-              lesson('queue-level-order', 'Level Order', 'queue-level-order-traversal', 'Medium', 'O(n)', 'O(n)'),
             ],
             Hard: [
               lesson('queue-deque', 'Double Ended Queue', 'queue-double-ended-queue', 'Hard', 'O(1)', 'O(n)'),
-              lesson('queue-monotonic', 'Monotonic Queue', 'queue-monotonic-queue', 'Hard', 'O(n)', 'O(n)'),
-              lesson('queue-sliding-max', 'Sliding Window Max', 'queue-sliding-window-maximum', 'Hard', 'O(n)', 'O(k)'),
-              lesson('queue-task-sched', 'Task Scheduler', 'queue-task-scheduler', 'Hard', 'O(n)', 'O(1)'),
             ],
           },
         },
-      ],
-      Intermediate: [
         {
           id: 'linked-list',
           name: 'Linked List',
-          description: 'Pointer-based sequences with reversal and cycle patterns.',
+          description: 'Pointer-based sequences with reversal, cycle, and cache patterns.',
           lessons: {
             Easy: [
               lesson('ll-create', 'Create', 'linked-list-create', 'Easy', 'O(n)', 'O(n)'),
@@ -224,15 +204,17 @@ export const tracks: Track[] = [
               lesson('ll-cycle', 'Detect Cycle', 'linked-list-detect-cycle', 'Hard', 'O(n)', 'O(1)'),
               lesson('ll-merge-sorted', 'Merge Sorted', 'linked-list-merge-two-sorted', 'Hard', 'O(n+m)', 'O(1)'),
               lesson('ll-reverse-k', 'Reverse K Group', 'linked-list-reverse-k-group', 'Hard', 'O(n)', 'O(1)'),
-              lesson('ll-merge-k', 'Merge K Sorted', 'linked-list-merge-k-sorted', 'Hard', 'O(n log k)', 'O(1)'),
               lesson('ll-lru', 'LRU Cache', 'linked-list-lru-cache', 'Hard', 'O(1)', 'O(n)'),
+              lesson('hashmap-lfu', 'LFU Cache', 'hashmap-lfu-cache', 'Hard', 'O(log n)', 'O(n)'),
             ],
           },
         },
+      ],
+      Intermediate: [
         {
           id: 'binary-tree',
           name: 'Binary Tree',
-          description: 'Hierarchical data with traversals and path problems.',
+          description: 'Hierarchical data: building, traversing, and measuring trees.',
           lessons: {
             Easy: [
               lesson('bt-create', 'Create', 'binary-tree-create', 'Easy', 'O(n)', 'O(n)'),
@@ -243,15 +225,10 @@ export const tracks: Track[] = [
             Medium: [
               lesson('bt-level', 'Level Order', 'binary-tree-level-order', 'Medium', 'O(n)', 'O(n)'),
               lesson('bt-height', 'Height', 'binary-tree-height', 'Medium', 'O(n)', 'O(h)'),
-              lesson('bt-diameter', 'Diameter', 'binary-tree-diameter', 'Medium', 'O(n)', 'O(h)'),
               lesson('bt-balanced', 'Check Balanced', 'binary-tree-check-balanced', 'Medium', 'O(n)', 'O(h)'),
             ],
             Hard: [
-              lesson('bt-lca', 'Lowest Common Ancestor', 'binary-tree-lowest-common-ancestor', 'Hard', 'O(n)', 'O(h)'),
               lesson('bt-serialize', 'Serialize/Deserialize', 'binary-tree-serialize-deserialize', 'Hard', 'O(n)', 'O(n)'),
-              lesson('bt-max-path', 'Maximum Path Sum', 'binary-tree-maximum-path-sum', 'Hard', 'O(n)', 'O(h)'),
-              lesson('bt-cameras', 'Binary Tree Cameras', 'binary-tree-cameras', 'Hard', 'O(n)', 'O(h)'),
-              lesson('bt-recover', 'Recover Tree', 'binary-tree-recover', 'Hard', 'O(n)', 'O(h)'),
             ],
           },
         },
@@ -264,10 +241,10 @@ export const tracks: Track[] = [
               lesson('bst-insert', 'Insert', 'bst-insert-node', 'Easy', 'O(h)', 'O(1)'),
               lesson('bst-search', 'Search', 'bst-search-node', 'Easy', 'O(h)', 'O(1)'),
               lesson('bst-delete', 'Delete', 'bst-delete-node', 'Easy', 'O(h)', 'O(1)'),
+              lesson('bst-min', 'Minimum', 'bst-minimum-node', 'Easy', 'O(h)', 'O(1)'),
+              lesson('bst-max', 'Maximum', 'bst-maximum-node', 'Easy', 'O(h)', 'O(1)'),
             ],
             Medium: [
-              lesson('bst-min', 'Minimum', 'bst-minimum-node', 'Medium', 'O(h)', 'O(1)'),
-              lesson('bst-max', 'Maximum', 'bst-maximum-node', 'Medium', 'O(h)', 'O(1)'),
               lesson('bst-validate', 'Validate', 'bst-validate', 'Medium', 'O(n)', 'O(h)'),
               lesson('bst-kth', 'Kth Smallest', 'bst-kth-smallest', 'Medium', 'O(h+k)', 'O(h)'),
             ],
@@ -283,25 +260,26 @@ export const tracks: Track[] = [
         {
           id: 'heap',
           name: 'Heap',
-          description: 'Priority queues for top-K, merging, and streaming medians.',
+          description: 'Priority queues for top-K, merging, scheduling, and streaming medians.',
           lessons: {
             Easy: [
               lesson('heap-basics', 'Heap Basics', 'heap-basics', 'Easy', 'O(1)', 'O(n)'),
               lesson('heap-min', 'Create Min Heap', 'heap-create-min', 'Easy', 'O(n)', 'O(n)'),
               lesson('heap-max', 'Create Max Heap', 'heap-create-max', 'Easy', 'O(n)', 'O(n)'),
+              lesson('heap-insert', 'Insert', 'heap-insert-element', 'Easy', 'O(log n)', 'O(1)'),
+              lesson('heap-remove', 'Remove', 'heap-remove-element', 'Easy', 'O(log n)', 'O(1)'),
             ],
             Medium: [
-              lesson('heap-insert', 'Insert', 'heap-insert-element', 'Medium', 'O(log n)', 'O(1)'),
-              lesson('heap-remove', 'Remove', 'heap-remove-element', 'Medium', 'O(log n)', 'O(1)'),
               lesson('heap-heapify', 'Heapify', 'heap-heapify', 'Medium', 'O(n)', 'O(1)'),
               lesson('heap-k-largest', 'K Largest', 'heap-k-largest', 'Medium', 'O(n log k)', 'O(k)'),
+              lesson('heap-k-smallest', 'K Smallest', 'heap-k-smallest', 'Medium', 'O(n log k)', 'O(k)'),
             ],
             Hard: [
-              lesson('heap-k-smallest', 'K Smallest', 'heap-k-smallest', 'Hard', 'O(n log k)', 'O(k)'),
               lesson('heap-merge-k', 'Merge K Sorted', 'heap-merge-k-sorted-arrays', 'Hard', 'O(n log k)', 'O(n)'),
               lesson('heap-top-k-freq', 'Top K Frequent', 'heap-top-k-frequent', 'Hard', 'O(n log k)', 'O(n)'),
               lesson('heap-median', 'Median Stream', 'heap-median-from-stream', 'Hard', 'O(log n)', 'O(n)'),
               lesson('heap-min-cost', 'Minimum Cost', 'heap-minimum-cost', 'Hard', 'O(n log n)', 'O(n)'),
+              lesson('queue-task-sched', 'Task Scheduler', 'queue-task-scheduler', 'Hard', 'O(n)', 'O(1)'),
             ],
           },
         },
@@ -329,12 +307,10 @@ export const tracks: Track[] = [
             ],
           },
         },
-      ],
-      Advanced: [
         {
           id: 'graph',
           name: 'Graph',
-          description: 'Vertices, edges, traversals, and shortest path algorithms.',
+          description: 'Vertices, edges, traversals, cycles, and connectivity.',
           lessons: {
             Easy: [
               lesson('graph-create', 'Create Graph', 'graph-create', 'Easy', 'O(V+E)', 'O(V+E)'),
@@ -346,20 +322,19 @@ export const tracks: Track[] = [
               lesson('graph-dfs', 'DFS', 'graph-dfs', 'Medium', 'O(V+E)', 'O(V)'),
               lesson('graph-cycle', 'Detect Cycle', 'graph-detect-cycle', 'Medium', 'O(V+E)', 'O(V)'),
               lesson('graph-topo', 'Topological Sort', 'graph-topological-sort', 'Medium', 'O(V+E)', 'O(V)'),
+              lesson('graph-islands', 'Number of Islands', 'graph-number-of-islands', 'Medium', 'O(V+E)', 'O(V)'),
             ],
             Hard: [
-              lesson('graph-dijkstra', 'Dijkstra', 'graph-dijkstra', 'Hard', 'O(E log V)', 'O(V)'),
-              lesson('graph-bellman', 'Bellman-Ford', 'graph-bellman-ford', 'Hard', 'O(V·E)', 'O(V)'),
-              lesson('graph-islands', 'Number of Islands', 'graph-number-of-islands', 'Hard', 'O(V+E)', 'O(V)'),
               lesson('graph-components', 'Connected Components', 'graph-connected-components', 'Hard', 'O(V+E)', 'O(V)'),
-              lesson('graph-prim', 'Prim MST', 'graph-prim', 'Hard', 'O(E log V)', 'O(V)'),
             ],
           },
         },
+      ],
+      Advanced: [
         {
           id: 'dsu',
           name: 'Disjoint Set Union',
-          description: 'Union-find for connectivity and MST foundations.',
+          description: 'Union-find for connectivity and merging groups.',
           lessons: {
             Easy: [
               lesson('dsu-create', 'Create', 'dsu-create', 'Easy', 'O(n)', 'O(n)'),
@@ -374,7 +349,6 @@ export const tracks: Track[] = [
             ],
             Hard: [
               lesson('dsu-provinces', 'Number of Provinces', 'dsu-number-of-provinces', 'Hard', 'O(n²·α(n))', 'O(n)'),
-              lesson('dsu-kruskal', 'Kruskal MST', 'dsu-kruskal-mst', 'Hard', 'O(E log E)', 'O(V)'),
               lesson('dsu-accounts', 'Accounts Merge', 'dsu-accounts-merge', 'Hard', 'O(n·k·α(n))', 'O(n·k)'),
               lesson('dsu-redundant', 'Redundant Connection', 'dsu-redundant-connection', 'Hard', 'O(n·α(n))', 'O(n)'),
               lesson('dsu-dynamic', 'Dynamic Connectivity', 'dsu-dynamic-connectivity', 'Hard', 'O(α(n))', 'O(n)'),
@@ -468,7 +442,7 @@ export const tracks: Track[] = [
         {
           id: 'searching',
           name: 'Searching',
-          description: 'Linear, binary, and advanced search strategies.',
+          description: 'Linear, binary, and interpolation search strategies.',
           lessons: {
             Easy: [
               lesson('search-linear', 'Linear Search', 'searching-linear', 'Easy', 'O(n)', 'O(1)'),
@@ -483,15 +457,13 @@ export const tracks: Track[] = [
             Hard: [
               lesson('search-rotated', 'Search Rotated Array', 'searching-rotated-array', 'Hard', 'O(log n)', 'O(1)'),
               lesson('search-peak', 'Find Peak Element', 'searching-peak-element', 'Hard', 'O(log n)', 'O(1)'),
-              lesson('search-median', 'Median Two Arrays', 'searching-median-two-arrays', 'Hard', 'O(log(min(m,n)))', 'O(1)'),
-              lesson('search-bsoa', 'Binary Search on Answer', 'searching-binary-on-answer', 'Hard', 'O(n log M)', 'O(1)'),
             ],
           },
         },
         {
           id: 'recursion',
           name: 'Recursion',
-          description: 'Recursive thinking from basics to backtracking classics.',
+          description: 'Recursive thinking: base cases, subproblems, and the call stack.',
           lessons: {
             Easy: [
               lesson('rec-print', 'Print Numbers', 'recursion-print-numbers', 'Easy', 'O(n)', 'O(n)'),
@@ -503,13 +475,10 @@ export const tracks: Track[] = [
             Medium: [
               lesson('rec-subsets', 'Generate Subsets', 'recursion-generate-subsets', 'Medium', 'O(2^n)', 'O(n)'),
               lesson('rec-perms', 'Generate Permutations', 'recursion-generate-permutations', 'Medium', 'O(n!)', 'O(n)'),
-              lesson('rec-hanoi', 'Tower of Hanoi', 'recursion-tower-of-hanoi', 'Medium', 'O(2^n)', 'O(n)'),
               lesson('rec-bin-search', 'Recursive Binary Search', 'recursion-binary-search', 'Medium', 'O(log n)', 'O(log n)'),
             ],
             Hard: [
-              lesson('rec-n-queens', 'N Queens', 'recursion-n-queens', 'Hard', 'O(n!)', 'O(n)'),
-              lesson('rec-sudoku', 'Sudoku Solver', 'recursion-sudoku-solver', 'Hard', 'O(9^m)', 'O(1)'),
-              lesson('rec-word-search', 'Word Search', 'recursion-word-search', 'Hard', 'O(m·n·4^L)', 'O(L)'),
+              lesson('rec-hanoi', 'Tower of Hanoi', 'recursion-tower-of-hanoi', 'Hard', 'O(2^n)', 'O(n)'),
             ],
           },
         },
@@ -541,7 +510,7 @@ export const tracks: Track[] = [
         {
           id: 'tree-algorithms',
           name: 'Tree Algorithms',
-          description: 'Traversal, LCA, and tree optimization problems.',
+          description: 'Traversal orders, paths, ancestors, and tree optimization problems.',
           lessons: {
             Easy: [
               lesson('tree-dfs', 'DFS Traversal', 'tree-dfs-traversal', 'Easy', 'O(n)', 'O(h)'),
@@ -556,9 +525,7 @@ export const tracks: Track[] = [
               lesson('tree-boundary', 'Boundary Traversal', 'tree-boundary', 'Medium', 'O(n)', 'O(h)'),
             ],
             Hard: [
-              lesson('tree-serialize', 'Serialize/Deserialize', 'tree-serialize', 'Hard', 'O(n)', 'O(n)'),
               lesson('tree-max-path', 'Maximum Path Sum', 'tree-max-path-sum', 'Hard', 'O(n)', 'O(h)'),
-              lesson('tree-recover', 'Recover Tree', 'tree-recover', 'Hard', 'O(n)', 'O(h)'),
             ],
           },
         },
@@ -585,6 +552,26 @@ export const tracks: Track[] = [
             ],
           },
         },
+        {
+          id: 'bit-algorithms',
+          name: 'Bit Algorithms',
+          description: 'Bitwise operators, tricks, and masks.',
+          lessons: {
+            Easy: [
+              lesson('bit-aox', 'AND / OR / XOR', 'bit-and-or-xor', 'Easy', 'O(1)', 'O(1)'),
+              lesson('bit-even-odd', 'Check Even/Odd', 'bit-check-even-odd', 'Easy', 'O(1)', 'O(1)'),
+              lesson('bit-pow2', 'Power of Two', 'bit-power-of-two', 'Easy', 'O(1)', 'O(1)'),
+              lesson('bit-count', 'Count Bits', 'bit-count-bits', 'Easy', 'O(log n)', 'O(1)'),
+            ],
+            Medium: [
+              lesson('bit-single', 'Single Number', 'bit-single-number', 'Medium', 'O(n)', 'O(1)'),
+              lesson('bit-mask', 'Bit Masking', 'bit-masking', 'Medium', 'O(n)', 'O(1)'),
+            ],
+            Hard: [
+              lesson('bit-subsets', 'Subsets Using Bits', 'bit-subsets', 'Hard', 'O(2^n)', 'O(1)'),
+            ],
+          },
+        },
       ],
       Advanced: [
         {
@@ -593,13 +580,9 @@ export const tracks: Track[] = [
           description: 'Shortest paths, MST, and advanced graph theory.',
           lessons: {
             Easy: [
-              lesson('ga-bfs', 'BFS', 'graph-bfs', 'Easy', 'O(V+E)', 'O(V)'),
-              lesson('ga-dfs', 'DFS', 'graph-dfs', 'Easy', 'O(V+E)', 'O(V)'),
               lesson('ga-components', 'Connected Components', 'graph-connected-components', 'Easy', 'O(V+E)', 'O(V)'),
             ],
             Medium: [
-              lesson('ga-topo', 'Topological Sort', 'graph-topological-sort', 'Medium', 'O(V+E)', 'O(V)'),
-              lesson('ga-cycle', 'Detect Cycle', 'graph-detect-cycle', 'Medium', 'O(V+E)', 'O(V)'),
               lesson('ga-dijkstra', 'Dijkstra', 'graph-dijkstra', 'Medium', 'O(E log V)', 'O(V)'),
               lesson('ga-bellman', 'Bellman-Ford', 'graph-bellman-ford', 'Medium', 'O(V·E)', 'O(V)'),
             ],
@@ -615,7 +598,7 @@ export const tracks: Track[] = [
         {
           id: 'dynamic-programming',
           name: 'Dynamic Programming',
-          description: 'Optimal substructure and overlapping subproblems.',
+          description: 'Optimal substructure, overlapping subproblems, bitmask and tree DP.',
           lessons: {
             Easy: [
               lesson('dp-fib', 'Fibonacci DP', 'dp-fibonacci', 'Easy', 'O(n)', 'O(1)'),
@@ -627,35 +610,44 @@ export const tracks: Track[] = [
               lesson('dp-coin', 'Coin Change', 'dp-coin-change', 'Medium', 'O(n·A)', 'O(A)'),
               lesson('dp-lis', 'LIS', 'dp-lis', 'Medium', 'O(n log n)', 'O(n)'),
               lesson('dp-knapsack', 'Knapsack', 'dp-knapsack', 'Medium', 'O(n·W)', 'O(W)'),
+              lesson('dp-lcs', 'LCS', 'dp-lcs', 'Medium', 'O(m·n)', 'O(m·n)'),
             ],
             Hard: [
               lesson('dp-edit', 'Edit Distance', 'dp-edit-distance', 'Hard', 'O(m·n)', 'O(m·n)'),
-              lesson('dp-lcs', 'LCS', 'dp-lcs', 'Hard', 'O(m·n)', 'O(m·n)'),
               lesson('dp-matrix', 'Matrix Chain', 'dp-matrix-chain', 'Hard', 'O(n³)', 'O(n²)'),
               lesson('dp-burst', 'Burst Balloons', 'dp-burst-balloons', 'Hard', 'O(n³)', 'O(n²)'),
+              lesson('bit-tsp', 'Traveling Salesman DP', 'bit-tsp', 'Hard', 'O(n²·2^n)', 'O(2^n)'),
+              lesson('bit-n-queens', 'N Queens Bitmask', 'bit-n-queens', 'Hard', 'O(n!)', 'O(n)'),
+              lesson('bt-cameras', 'Binary Tree Cameras', 'binary-tree-cameras', 'Hard', 'O(n)', 'O(h)'),
             ],
           },
         },
         {
-          id: 'bit-algorithms',
-          name: 'Bit Algorithms',
-          description: 'Bitwise tricks, masks, and DP on subsets.',
+          id: 'string-algorithms',
+          name: 'String Algorithms',
+          description: 'Linear-time pattern matching and palindrome algorithms.',
           lessons: {
-            Easy: [
-              lesson('bit-aox', 'AND / OR / XOR', 'bit-and-or-xor', 'Easy', 'O(1)', 'O(1)'),
-              lesson('bit-even-odd', 'Check Even/Odd', 'bit-check-even-odd', 'Easy', 'O(1)', 'O(1)'),
-              lesson('bit-pow2', 'Power of Two', 'bit-power-of-two', 'Easy', 'O(1)', 'O(1)'),
-              lesson('bit-count', 'Count Bits', 'bit-count-bits', 'Easy', 'O(log n)', 'O(1)'),
-            ],
+            Easy: [],
             Medium: [
-              lesson('bit-single', 'Single Number', 'bit-single-number', 'Medium', 'O(n)', 'O(1)'),
-              lesson('bit-subsets', 'Subsets Using Bits', 'bit-subsets', 'Medium', 'O(2^n)', 'O(1)'),
-              lesson('bit-mask', 'Bit Masking', 'bit-masking', 'Medium', 'O(n)', 'O(1)'),
+              lesson('string-rabin-karp', 'Rabin-Karp', 'string-rabin-karp', 'Medium', 'O(n+m)', 'O(m)'),
+              lesson('string-kmp', 'KMP', 'string-kmp', 'Medium', 'O(n+m)', 'O(m)'),
             ],
             Hard: [
-              lesson('bit-n-queens', 'N Queens Bitmask', 'bit-n-queens', 'Hard', 'O(n!)', 'O(n)'),
-              lesson('bit-tsp', 'Traveling Salesman DP', 'bit-tsp', 'Hard', 'O(n²·2^n)', 'O(2^n)'),
-              lesson('bit-max-xor', 'Maximum XOR', 'bit-maximum-xor', 'Hard', 'O(n·b)', 'O(n·b)'),
+              lesson('string-manacher', 'Manacher', 'string-manacher', 'Hard', 'O(n)', 'O(n)'),
+            ],
+          },
+        },
+        {
+          id: 'advanced-searching',
+          name: 'Advanced Searching',
+          description: 'Binary search over answers and partitions.',
+          lessons: {
+            Easy: [],
+            Medium: [
+              lesson('search-bsoa', 'Binary Search on Answer', 'searching-binary-on-answer', 'Medium', 'O(n log M)', 'O(1)'),
+            ],
+            Hard: [
+              lesson('search-median', 'Median Two Arrays', 'searching-median-two-arrays', 'Hard', 'O(log(min(m,n)))', 'O(1)'),
             ],
           },
         },
@@ -671,7 +663,7 @@ export const tracks: Track[] = [
         {
           id: 'two-pointers',
           name: 'Two Pointers',
-          description: 'Opposite ends and slow/fast pointer techniques.',
+          description: 'Pointers moving inward from both ends, or a read and a write pointer.',
           lessons: {
             Easy: [
               lesson('pat-two-sum', 'Two Sum (Sorted)', 'array-two-sum-sorted', 'Easy', 'O(n)', 'O(1)'),
@@ -682,11 +674,11 @@ export const tracks: Track[] = [
               lesson('pat-remove-dup', 'Remove Duplicates (Sorted)', 'array-remove-duplicates-sorted', 'Medium', 'O(n)', 'O(1)'),
               lesson('pat-dutch', 'Dutch Flag', 'array-dutch-flag', 'Medium', 'O(n)', 'O(1)'),
               lesson('pat-merge-sorted', 'Merge Sorted', 'array-merge-sorted', 'Medium', 'O(n+m)', 'O(1)'),
+              lesson('pat-three-sum', 'Three Sum', 'array-three-sum', 'Medium', 'O(n²)', 'O(1)'),
             ],
             Hard: [
               lesson('pat-rain', 'Trapping Rain Water', 'array-rain-water', 'Hard', 'O(n)', 'O(1)'),
-              lesson('pat-intervals', 'Merge Intervals', 'array-merge-intervals', 'Hard', 'O(n log n)', 'O(n)'),
-              lesson('pat-three-sum', 'Three Sum', 'array-three-sum', 'Hard', 'O(n²)', 'O(1)'),
+              lesson('pat-container', 'Container With Most Water', 'array-container-most-water', 'Hard', 'O(n)', 'O(1)'),
             ],
           },
         },
@@ -696,43 +688,42 @@ export const tracks: Track[] = [
           description: 'Fixed and variable window optimization.',
           lessons: {
             Easy: [
-              lesson('pat-prefix', 'Prefix Sum', 'array-prefix-sum', 'Easy', 'O(n)', 'O(n)'),
-              lesson('pat-kadane', 'Max Subarray', 'array-kadane', 'Easy', 'O(n)', 'O(1)'),
+              lesson('pat-max-sum-k', 'Max Sum of Size K', 'array-max-sum-subarray-k', 'Easy', 'O(n)', 'O(1)'),
+              lesson('pat-averages', 'Averages of Subarrays', 'array-subarray-averages', 'Easy', 'O(n)', 'O(n)'),
             ],
             Medium: [
-              lesson('pat-sw-max', 'Sliding Window Max', 'queue-sliding-window-maximum', 'Medium', 'O(n)', 'O(k)'),
-              lesson('pat-min-window', 'Minimum Window', 'string-minimum-window-substring', 'Medium', 'O(n)', 'O(1)'),
-              lesson('pat-subarray-k', 'Subarray Sum K', 'hashmap-subarray-sum-equals-k', 'Medium', 'O(n)', 'O(n)'),
+              lesson('pat-longest-unique', 'Longest Unique Substring', 'string-longest-unique-substring', 'Medium', 'O(n)', 'O(k)'),
             ],
             Hard: [
-              lesson('pat-longest-unique', 'Longest Unique Substring', 'string-longest-unique-substring', 'Hard', 'O(n)', 'O(k)'),
+              lesson('pat-min-window', 'Minimum Window', 'string-minimum-window-substring', 'Hard', 'O(n)', 'O(1)'),
               lesson('pat-anagrams', 'Count Anagrams', 'string-count-anagrams', 'Hard', 'O(n)', 'O(1)'),
-              // Was 'pat-task-sched' (Task Scheduler): a greedy/heap problem, not a
-              // window one. It stays in the Queue topic as 'queue-task-scheduler'.
               lesson('pat-sw-median', 'Sliding Window Median', 'heap-sliding-window-median', 'Hard', 'O(n log k)', 'O(k)'),
+              lesson('queue-monotonic', 'Monotonic Queue', 'queue-monotonic-queue', 'Hard', 'O(n)', 'O(n)'),
+              lesson('pat-sw-max', 'Sliding Window Max', 'queue-sliding-window-maximum', 'Hard', 'O(n)', 'O(k)'),
+            ],
+          },
+        },
+        {
+          id: 'fast-slow-pointer',
+          name: 'Fast & Slow Pointer',
+          description: 'Two pointers at different speeds for cycles and midpoints.',
+          lessons: {
+            Easy: [
+              lesson('pat-ll-middle', 'Middle of List', 'linked-list-middle', 'Easy', 'O(n)', 'O(1)'),
+              lesson('pat-happy', 'Happy Number', 'number-happy-fast-slow', 'Easy', 'O(log n)', 'O(1)'),
+            ],
+            Medium: [
+              lesson('pat-ll-cycle', 'Detect Cycle', 'linked-list-detect-cycle', 'Medium', 'O(n)', 'O(1)'),
+              lesson('pat-ll-palindrome', 'Palindrome Linked List', 'linked-list-palindrome', 'Medium', 'O(n)', 'O(1)'),
+            ],
+            Hard: [
+              lesson('pat-cycle-start', 'Cycle Start', 'linked-list-cycle-start', 'Hard', 'O(n)', 'O(1)'),
+              lesson('pat-find-dup', 'Find Duplicate Number', 'array-find-duplicate-number', 'Hard', 'O(n)', 'O(1)'),
             ],
           },
         },
       ],
       Intermediate: [
-        {
-          id: 'fast-slow-pointer',
-          name: 'Fast & Slow Pointer',
-          description: 'Cycle detection and middle-finding patterns.',
-          lessons: {
-            Easy: [
-              lesson('pat-ll-middle', 'Middle of List', 'linked-list-middle', 'Easy', 'O(n)', 'O(1)'),
-            ],
-            Medium: [
-              lesson('pat-ll-cycle', 'Detect Cycle', 'linked-list-detect-cycle', 'Medium', 'O(n)', 'O(1)'),
-              lesson('pat-ll-reverse', 'Reverse List', 'linked-list-reverse', 'Medium', 'O(n)', 'O(1)'),
-            ],
-            Hard: [
-              lesson('pat-ll-k-group', 'Reverse K Group', 'linked-list-reverse-k-group', 'Hard', 'O(n)', 'O(1)'),
-              lesson('pat-ll-merge-k', 'Merge K Lists', 'linked-list-merge-k-sorted', 'Hard', 'O(n log k)', 'O(1)'),
-            ],
-          },
-        },
         {
           id: 'monotonic-stack',
           name: 'Monotonic Stack',
@@ -751,27 +742,7 @@ export const tracks: Track[] = [
           },
         },
       ],
-      Advanced: [
-        {
-          id: 'graph-patterns',
-          name: 'Graph Patterns',
-          description: 'BFS/DFS, shortest path, and connectivity patterns.',
-          lessons: {
-            Easy: [
-              lesson('pat-bfs', 'BFS Pattern', 'graph-bfs', 'Easy', 'O(V+E)', 'O(V)'),
-              lesson('pat-dfs', 'DFS Pattern', 'graph-dfs', 'Easy', 'O(V+E)', 'O(V)'),
-            ],
-            Medium: [
-              lesson('pat-topo', 'Topological Sort', 'graph-topological-sort', 'Medium', 'O(V+E)', 'O(V)'),
-              lesson('pat-dijkstra', 'Dijkstra Pattern', 'graph-dijkstra', 'Medium', 'O(E log V)', 'O(V)'),
-            ],
-            Hard: [
-              lesson('pat-floyd', 'All Pairs Shortest', 'graph-floyd-warshall', 'Hard', 'O(V³)', 'O(V²)'),
-              lesson('pat-astar', 'A* Pattern', 'graph-a-star', 'Hard', 'O(E)', 'O(V)'),
-            ],
-          },
-        },
-      ],
+      Advanced: [],
     },
   },
 ];

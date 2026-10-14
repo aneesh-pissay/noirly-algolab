@@ -9,6 +9,13 @@ const ALGORITHM_LINE_MAP: Record<string, Partial<Record<AlgorithmAction | 'defau
   'array-remove-duplicates-sorted': { default: (step) => step.codeLine },
   'string-longest-unique-substring': { default: (step) => step.codeLine },
   'string-count-anagrams': { default: (step) => step.codeLine },
+  'array-max-sum-subarray-k': { default: (step) => step.codeLine },
+  'array-subarray-averages': { default: (step) => step.codeLine },
+  'array-container-most-water': { default: (step) => step.codeLine },
+  'number-happy-fast-slow': { default: (step) => step.codeLine },
+  'linked-list-palindrome': { default: (step) => step.codeLine },
+  'linked-list-cycle-start': { default: (step) => step.codeLine },
+  'array-find-duplicate-number': { default: (step) => step.codeLine },
   'sorting-bubble': {
     initialize: 1,
     compare: 4,

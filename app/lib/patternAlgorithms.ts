@@ -262,12 +262,318 @@ export const countAnagrams: Algorithm = {
   },
 };
 
+// --------------------------------------------------------------- Max sum of a size-k window
+
+const maxSumKComplexity = { time: 'O(n)', space: 'O(1)' };
+
+export const maxSumSubarrayK: Algorithm = {
+  name: 'Maximum Sum Subarray of Size K',
+  category: 'pattern',
+  complexity: maxSumKComplexity,
+  description: 'Keeps a running sum of a fixed window of k numbers: add the number entering on the right, subtract the one leaving on the left.',
+  generateSteps(input) {
+    const array = numbers(input, [2, 1, 5, 1, 3, 2]);
+    const k = num(input, 'k', 3);
+    const r = recorder(maxSumKComplexity);
+    if (k < 1 || k > array.length) {
+      r.push({ action: 'not-found', description: `A window of ${k} does not fit in ${array.length} numbers.`, array, variables: { k }, codeLine: 8 });
+      return r.steps;
+    }
+    let windowSum = 0;
+    let best = -Infinity;
+    let bestStart = 0;
+    r.push({ action: 'initialize', description: `The window holds ${k} numbers. Start with an empty sum.`, array, variables: { k, windowSum }, codeLine: 2 });
+    for (let right = 0; right < array.length; right += 1) {
+      windowSum += array[right];
+      const left = right - k + 1;
+      if (right >= k) {
+        windowSum -= array[right - k];
+        r.push({ action: 'shift', description: `Slide right: add ${array[right]}, drop ${array[right - k]}. Sum is ${windowSum}.`, array, highlights: range(left, right), variables: { left, right, windowSum, best }, codeLine: 5 });
+      } else {
+        r.push({ action: 'visit', description: `Add ${array[right]} while the first window fills. Sum is ${windowSum}.`, array, highlights: range(0, right), variables: { right, windowSum }, codeLine: 4 });
+      }
+      if (right >= k - 1) {
+        if (windowSum > best) {
+          best = windowSum;
+          bestStart = left;
+          r.push({ action: 'found', description: `New best: [${array.slice(left, right + 1).join(', ')}] sums to ${best}.`, array, highlights: range(left, right), variables: { left, right, windowSum, best }, codeLine: 6 });
+        } else {
+          r.push({ action: 'compare', description: `${windowSum} does not beat the best of ${best}.`, array, highlights: range(left, right), variables: { left, right, windowSum, best }, codeLine: 6 });
+        }
+      }
+    }
+    r.push({ action: 'found', description: `The largest sum of ${k} consecutive numbers is ${best}, starting at index ${bestStart}.`, array, highlights: range(bestStart, bestStart + k - 1), variables: { best }, memory: { answer: best }, codeLine: 8 });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Averages of size-k windows
+
+const averagesComplexity = { time: 'O(n)', space: 'O(n)' };
+
+export const subarrayAverages: Algorithm = {
+  name: 'Averages of Subarrays of Size K',
+  category: 'pattern',
+  complexity: averagesComplexity,
+  description: 'Slides a window of k numbers across the array, reusing the previous sum to get each window average in O(1).',
+  generateSteps(input) {
+    const array = numbers(input, [1, 3, 2, 6, -1, 4, 1, 8, 2]);
+    const k = num(input, 'k', 5);
+    const r = recorder(averagesComplexity);
+    if (k < 1 || k > array.length) {
+      r.push({ action: 'not-found', description: `A window of ${k} does not fit in ${array.length} numbers.`, array, variables: { k }, codeLine: 8 });
+      return r.steps;
+    }
+    const round = (x: number) => Math.round(x * 100) / 100;
+    const result: number[] = [];
+    let windowSum = 0;
+    r.push({ action: 'initialize', description: `Each window holds ${k} numbers; the result starts empty.`, array, variables: { k, windowSum }, memory: { result: [] }, codeLine: 2 });
+    for (let right = 0; right < array.length; right += 1) {
+      windowSum += array[right];
+      const left = right - k + 1;
+      if (right >= k) {
+        windowSum -= array[right - k];
+        r.push({ action: 'shift', description: `Slide right: add ${array[right]}, drop ${array[right - k]}. Sum is ${windowSum}.`, array, highlights: range(left, right), variables: { left, right, windowSum }, memory: { result: [...result] }, codeLine: 5 });
+      } else {
+        r.push({ action: 'visit', description: `Add ${array[right]} while the first window fills. Sum is ${windowSum}.`, array, highlights: range(0, right), variables: { right, windowSum }, memory: { result: [...result] }, codeLine: 4 });
+      }
+      if (right >= k - 1) {
+        result.push(round(windowSum / k));
+        r.push({ action: 'place', description: `Average of [${array.slice(left, right + 1).join(', ')}] is ${windowSum} / ${k} = ${result[result.length - 1]}.`, array, highlights: range(left, right), variables: { left, right, windowSum }, memory: { result: [...result] }, codeLine: 6 });
+      }
+    }
+    r.push({ action: 'found', description: `${result.length} window averages: [${result.join(', ')}].`, array, memory: { result }, codeLine: 8 });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Container with most water
+
+const containerComplexity = { time: 'O(n)', space: 'O(1)' };
+
+export const containerMostWater: Algorithm = {
+  name: 'Container With Most Water',
+  category: 'pattern',
+  complexity: containerComplexity,
+  description: 'Starts with the widest container and moves the shorter wall inward, since only a taller wall can make a narrower container hold more.',
+  generateSteps(input) {
+    const array = numbers(input, [1, 8, 6, 2, 5, 4, 8, 3, 7]).map(Math.abs);
+    const r = recorder(containerComplexity);
+    let left = 0;
+    let right = array.length - 1;
+    let best = 0;
+    let bestPair: [number, number] = [0, right];
+    r.push({ action: 'initialize', description: `Start with the widest container: walls at index 0 and ${right}.`, array, highlights: [left, right], variables: { left, right, best }, codeLine: 2 });
+    while (left < right) {
+      const area = Math.min(array[left], array[right]) * (right - left);
+      r.push({ action: 'compare', description: `Water between ${array[left]} and ${array[right]}: min height ${Math.min(array[left], array[right])} × width ${right - left} = ${area}.`, array, highlights: [left, right], variables: { left, right, area, best }, codeLine: 4 });
+      if (area > best) {
+        best = area;
+        bestPair = [left, right];
+        r.push({ action: 'found', description: `New best area: ${best}.`, array, highlights: [left, right], variables: { left, right, area, best }, codeLine: 5 });
+      }
+      if (array[left] < array[right]) {
+        left += 1;
+        r.push({ action: 'move-pointer', description: `The left wall is shorter, so move left to index ${left}.`, array, highlights: [left, right], variables: { left, right, best }, codeLine: 6 });
+      } else {
+        right -= 1;
+        r.push({ action: 'move-pointer', description: `The right wall is not taller, so move right to index ${right}.`, array, highlights: [left, right], variables: { left, right, best }, codeLine: 7 });
+      }
+    }
+    r.push({ action: 'found', description: `Most water: ${best}, between indices ${bestPair[0]} and ${bestPair[1]}.`, array, highlights: bestPair, variables: { best }, memory: { answer: best }, codeLine: 9 });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Happy number (fast & slow)
+
+const happyComplexity = { time: 'O(log n)', space: 'O(1)' };
+
+function digitSquareSum(x: number): number {
+  let sum = 0;
+  for (; x > 0; x = Math.floor(x / 10)) sum += (x % 10) ** 2;
+  return sum;
+}
+
+export const happyNumberFastSlow: Algorithm = {
+  name: 'Happy Number (Fast & Slow)',
+  category: 'pattern',
+  complexity: happyComplexity,
+  description: 'Treats "replace n by the sum of the squares of its digits" as a linked list and runs Floyd cycle detection on it, with no set.',
+  generateSteps(input) {
+    const n = Math.abs(Math.trunc(num(input, 'target', 19))) || 19;
+    // The chain of values n, next(n), …, laid out like a list whose last
+    // element points back to `loopTo` (1 points to itself).
+    const chain = [n];
+    let loopTo = -1;
+    while (loopTo < 0) {
+      const value = digitSquareSum(chain[chain.length - 1]);
+      loopTo = chain.indexOf(value);
+      if (loopTo < 0) chain.push(value);
+    }
+    const step = (i: number) => (i < chain.length - 1 ? i + 1 : loopTo);
+    const r = recorder(happyComplexity);
+    let slow = 0;
+    let fast = step(0);
+    r.push({ action: 'initialize', description: `slow starts at ${n}, fast one step ahead at ${chain[fast]}. Each value leads to the sum of its digits squared.`, array: chain, highlights: [slow, fast], variables: { slow: chain[slow], fast: chain[fast] }, codeLine: 2 });
+    while (chain[fast] !== 1 && slow !== fast) {
+      slow = step(slow);
+      fast = step(step(fast));
+      r.push({ action: 'move-pointer', description: `slow moves one step to ${chain[slow]}; fast moves two steps to ${chain[fast]}.`, array: chain, highlights: [slow, fast], variables: { slow: chain[slow], fast: chain[fast] }, codeLine: 4 });
+    }
+    const happy = chain[fast] === 1;
+    r.push({
+      action: happy ? 'found' : 'not-found',
+      description: happy ? `fast reached 1, so ${n} is happy.` : `slow and fast met at ${chain[slow]} without reaching 1: the values loop forever, so ${n} is not happy.`,
+      array: chain,
+      highlights: [fast],
+      variables: { isHappy: happy },
+      memory: { answer: happy },
+      codeLine: 7,
+    });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Palindrome linked list
+
+const palindromeListComplexity = { time: 'O(n)', space: 'O(1)' };
+
+export const palindromeLinkedList: Algorithm = {
+  name: 'Palindrome Linked List',
+  category: 'pattern',
+  complexity: palindromeListComplexity,
+  description: 'Finds the middle with slow and fast pointers, reverses the second half in place, then walks both halves together comparing values.',
+  generateSteps(input) {
+    const list = numbers(input, [1, 2, 3, 2, 1]);
+    const r = recorder(palindromeListComplexity);
+    let slow = 0;
+    let fast = 0;
+    r.push({ action: 'initialize', description: 'The list is shown left to right, one box per node. slow and fast start at the head.', array: list, highlights: [0], variables: { slow, fast }, codeLine: 2 });
+    while (fast < list.length && fast + 1 < list.length) {
+      slow += 1;
+      fast += 2;
+      r.push({ action: 'move-pointer', description: `slow → node ${slow}, fast → ${fast < list.length ? `node ${fast}` : 'null'}.`, array: list, highlights: fast < list.length ? [slow, fast] : [slow], variables: { slow, fast }, codeLine: 3 });
+    }
+    const second = range(slow, list.length - 1);
+    r.push({ action: 'flip', description: `fast hit the end, so slow is at the middle. Reverse the second half (nodes ${slow}–${list.length - 1}) so it can be walked from the tail.`, array: list, highlights: second, variables: { mid: slow }, codeLine: 4 });
+    for (let i = 0; i < list.length - slow; i += 1) {
+      const j = list.length - 1 - i;
+      if (list[i] !== list[j]) {
+        r.push({ action: 'not-found', description: `${list[i]} ≠ ${list[j]}: not a palindrome.`, array: list, highlights: [i, j], variables: { first: list[i], second: list[j] }, memory: { answer: false }, codeLine: 7 });
+        return r.steps;
+      }
+      r.push({ action: 'compare', description: `Front node ${i} (${list[i]}) matches back node ${j} (${list[j]}).`, array: list, highlights: [i, j], variables: { first: list[i], second: list[j] }, codeLine: 7 });
+    }
+    r.push({ action: 'found', description: 'Every pair matched: the list is a palindrome.', array: list, highlights: range(0, list.length - 1), memory: { answer: true }, codeLine: 10 });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Cycle start (Floyd)
+
+const cycleStartComplexity = { time: 'O(n)', space: 'O(1)' };
+
+export const cycleStart: Algorithm = {
+  name: 'Linked List Cycle Start',
+  category: 'pattern',
+  complexity: cycleStartComplexity,
+  description: 'Finds where a cycle begins: after slow and fast meet, a pointer from the head and one from the meeting point reach the cycle start together.',
+  generateSteps(input) {
+    const list = numbers(input, [3, 2, 0, -4, 6, 8]);
+    const loopTo = Math.trunc(num(input, 'target', 2));
+    const hasCycle = loopTo >= 0 && loopTo < list.length;
+    const step = (i: number) => (i < 0 ? -1 : i < list.length - 1 ? i + 1 : hasCycle ? loopTo : -1);
+    const r = recorder(cycleStartComplexity);
+    let slow = 0;
+    let fast = 0;
+    r.push({
+      action: 'initialize',
+      description: hasCycle ? `The tail links back to node ${loopTo}. slow and fast start at the head.` : 'The tail points to null. slow and fast start at the head.',
+      array: list,
+      highlights: [0],
+      variables: { slow, fast, tailLinksTo: hasCycle ? loopTo : null },
+      codeLine: 2,
+    });
+    let met = false;
+    while (fast >= 0 && step(fast) >= 0) {
+      slow = step(slow);
+      fast = step(step(fast));
+      if (fast < 0) break;
+      r.push({ action: 'move-pointer', description: `slow → node ${slow}, fast → node ${fast}.`, array: list, highlights: [slow, fast], variables: { slow, fast }, codeLine: 4 });
+      if (slow === fast) {
+        met = true;
+        r.push({ action: 'compare', description: `slow and fast meet at node ${slow}: there is a cycle.`, array: list, highlights: [slow], variables: { slow, fast }, codeLine: 5 });
+        break;
+      }
+    }
+    if (!met) {
+      r.push({ action: 'not-found', description: 'fast reached null, so there is no cycle.', array: list, variables: { answer: null }, memory: { answer: null }, codeLine: 7 });
+      return r.steps;
+    }
+    slow = 0;
+    r.push({ action: 'move-pointer', description: 'Move slow back to the head; fast stays at the meeting point. Both now move one step at a time.', array: list, highlights: [slow, fast], variables: { slow, fast }, codeLine: 8 });
+    while (slow !== fast) {
+      slow = step(slow);
+      fast = step(fast);
+      r.push({ action: 'move-pointer', description: `slow → node ${slow}, fast → node ${fast}.`, array: list, highlights: [slow, fast], variables: { slow, fast }, codeLine: 9 });
+    }
+    r.push({ action: 'found', description: `They meet at node ${slow} (value ${list[slow]}): the cycle starts here.`, array: list, highlights: [slow], variables: { start: slow }, memory: { answer: slow }, codeLine: 10 });
+    return r.steps;
+  },
+};
+
+// --------------------------------------------------------------- Find the duplicate number (Floyd)
+
+const findDuplicateComplexity = { time: 'O(n)', space: 'O(1)' };
+
+export const findDuplicateNumber: Algorithm = {
+  name: 'Find the Duplicate Number',
+  category: 'pattern',
+  complexity: findDuplicateComplexity,
+  description: 'Reads each value as a pointer to the index it names. The repeated value is where two pointers lead, so it is the start of a cycle, found with Floyd.',
+  generateSteps(input) {
+    const array = numbers(input, [1, 3, 4, 2, 2]);
+    const r = recorder(findDuplicateComplexity);
+    const n = array.length - 1;
+    if (n < 1 || !array.every((v) => Number.isInteger(v) && v >= 1 && v <= n)) {
+      r.push({ action: 'not-found', description: `Needs ${array.length} numbers each between 1 and ${Math.max(n, 1)}, so that every value is a valid index.`, array, codeLine: 1 });
+      return r.steps;
+    }
+    let slow = array[0];
+    let fast = array[0];
+    r.push({ action: 'initialize', description: `Each value points to an index. Start both pointers at nums[0] = ${slow}.`, array, highlights: [0, slow], variables: { slow, fast }, codeLine: 2 });
+    do {
+      slow = array[slow];
+      fast = array[array[fast]];
+      r.push({ action: 'move-pointer', description: `slow jumps once to index ${slow}; fast jumps twice to index ${fast}.`, array, highlights: [slow, fast], variables: { slow, fast }, codeLine: 5 });
+    } while (slow !== fast);
+    r.push({ action: 'compare', description: `slow and fast meet at index ${slow}, which is inside the cycle.`, array, highlights: [slow], variables: { slow, fast }, codeLine: 6 });
+    slow = array[0];
+    r.push({ action: 'move-pointer', description: `Restart slow at nums[0] = ${slow}; both now jump once per step.`, array, highlights: [slow, fast], variables: { slow, fast }, codeLine: 7 });
+    while (slow !== fast) {
+      slow = array[slow];
+      fast = array[fast];
+      r.push({ action: 'move-pointer', description: `slow → index ${slow}, fast → index ${fast}.`, array, highlights: [slow, fast], variables: { slow, fast }, codeLine: 10 });
+    }
+    r.push({ action: 'found', description: `They meet at ${slow}: the cycle's entrance, which is the duplicate value.`, array, highlights: array.flatMap((v, i) => (v === slow ? [i] : [])), variables: { duplicate: slow }, memory: { answer: slow }, codeLine: 12 });
+    return r.steps;
+  },
+};
+
 export const PATTERN_ALGORITHMS: Record<string, Algorithm> = {
   'array-two-sum-sorted': twoSumSorted,
   'array-three-sum': threeSum,
   'array-remove-duplicates-sorted': removeDuplicatesSorted,
   'string-longest-unique-substring': longestUniqueSubstring,
   'string-count-anagrams': countAnagrams,
+  'array-max-sum-subarray-k': maxSumSubarrayK,
+  'array-subarray-averages': subarrayAverages,
+  'array-container-most-water': containerMostWater,
+  'number-happy-fast-slow': happyNumberFastSlow,
+  'linked-list-palindrome': palindromeLinkedList,
+  'linked-list-cycle-start': cycleStart,
+  'array-find-duplicate-number': findDuplicateNumber,
 };
 
 export function registerPatternAlgorithms(engine: VisualizerEngine): void {

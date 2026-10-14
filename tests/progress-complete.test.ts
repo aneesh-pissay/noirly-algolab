@@ -77,7 +77,7 @@ describe('POST /api/progress/complete', () => {
   });
 
   it('refuses a locked lesson even with a recorded pass (B8)', async () => {
-    const locked = 'array-histogram';
+    const locked = 'array-next-perm';
     state.doc!.lastPassedAttempt = { lessonId: locked, score: 100, templated: false, passedAt: new Date() };
     const res = await POST(request({ lessonId: locked }));
     expect(res.status).toBe(403);

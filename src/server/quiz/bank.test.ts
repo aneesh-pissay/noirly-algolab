@@ -8,10 +8,10 @@ describe('lesson quiz bank', () => {
   });
 
   it('uses the lesson’s own complexity, not the first lesson sharing its algorithm', () => {
-    // pat-bfs and the Algorithms-track BFS lesson share graph-bfs.
-    const quiz = getLessonQuiz('pat-bfs')!;
+    // pat-ll-middle and the Linked List lesson share linked-list-middle.
+    const quiz = getLessonQuiz('pat-ll-middle')!;
     const timeQ = quiz.questions.find((q) => q.id.endsWith('-time'))!;
-    expect(timeQ.options[timeQ.correctAnswer]).toBe('O(V+E)');
+    expect(timeQ.options[timeQ.correctAnswer]).toBe('O(n)');
   });
 
   it('uses authored questions when a lesson has them', () => {

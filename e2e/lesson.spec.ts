@@ -61,10 +61,10 @@ test('a shared link restores the input and step', async ({ page }) => {
 test('command palette jumps to a lesson', async ({ page }) => {
   await page.goto('/dashboard');
   await page.keyboard.press('Control+K');
-  await page.getByPlaceholder(/Search/).fill('Dijkstra Pattern');
-  await page.getByRole('option', { name: /Dijkstra Pattern/ }).click();
-  await expect(page).toHaveURL(/\/visualizer\/pat-dijkstra/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Dijkstra Pattern' })).toBeVisible();
+  await page.getByPlaceholder(/Search/).fill('Container With Most Water');
+  await page.getByRole('option', { name: /Container With Most Water.*Two Pointers/ }).click();
+  await expect(page).toHaveURL(/\/visualizer\/pat-container/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Container With Most Water' })).toBeVisible();
 });
 
 test('old algorithm-id links redirect to the lesson', async ({ page }) => {
@@ -101,7 +101,7 @@ test('completing a locked lesson is refused', async ({ page }) => {
   await page.goto('/dashboard');
   const response = await page.request.post('/api/progress/complete', {
     headers: { 'X-Noirly-CSRF': '1' },
-    data: { lessonId: 'array-histogram', quizScore: 100 },
+    data: { lessonId: 'array-next-perm', quizScore: 100 },
   });
   expect(response.status()).toBe(403);
 });

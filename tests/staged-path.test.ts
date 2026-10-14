@@ -23,7 +23,7 @@ function complete(state: UserProgress, ids: string[]): UserProgress {
 
 const firstLessonOf = (trackId: string, level: Level, topicIndex = 0) => {
   const topic = tracks.find((t) => t.id === trackId)!.topics[level][topicIndex];
-  return topic.lessons.Easy[0].id;
+  return [...topic.lessons.Easy, ...topic.lessons.Medium, ...topic.lessons.Hard][0].id;
 };
 
 /** Every track's core for a level, in the order a learner can reach it. */
@@ -60,7 +60,8 @@ describe('staged learning path', () => {
 
   it('opens Advanced after the Intermediate core of every track', () => {
     const state = complete(getInitialProgress(), [...stageInOrder('Beginner'), ...stageInOrder('Intermediate')]);
-    for (const track of tracks) expect(state.unlockedLessons).toContain(firstLessonOf(track.id, 'Advanced'));
+    // Patterns has no Advanced topic; the other tracks open theirs.
+    for (const track of tracks.filter((t) => t.topics.Advanced.length > 0)) expect(state.unlockedLessons).toContain(firstLessonOf(track.id, 'Advanced'));
   });
 
   it('gives existing learners what the new rules open, without a migration', () => {
@@ -70,5 +71,26 @@ describe('staged learning path', () => {
     const legacy: UserProgress = { ...getInitialProgress(), completedLessons: done, unlockedLessons: [...getInitialProgress().unlockedLessons, ...done] };
     expect(legacy.unlockedLessons).not.toContain(firstLessonOf('data-structures', 'Beginner', 1));
     expect(reconcileUnlocks(legacy).unlockedLessons).toContain(firstLessonOf('data-structures', 'Beginner', 1));
+  });
+
+  it('moves saved tier and topic keys with a topic that changed level', () => {
+    // Saved while Linked List was an Intermediate topic.
+    const legacy: UserProgress = {
+      ...getInitialProgress(),
+      unlockedLessons: [...getInitialProgress().unlockedLessons, 'll-create'],
+      unlockedTiers: [...getInitialProgress().unlockedTiers, 'data-structures:Intermediate:linked-list:Easy'],
+      unlockedTopics: [...getInitialProgress().unlockedTopics, 'data-structures:Intermediate:linked-list'],
+    };
+    const state = reconcileUnlocks(legacy);
+    expect(state.unlockedTopics).toContain('data-structures:Beginner:linked-list');
+    expect(state.unlockedTiers).toContain('data-structures:Beginner:linked-list:Easy');
+  });
+
+  it('does not open a later stage for a lesson that moved up a level', () => {
+    // KMP used to be a Beginner Strings lesson; it is now Advanced.
+    const legacy: UserProgress = { ...getInitialProgress(), unlockedLessons: [...getInitialProgress().unlockedLessons, 'string-kmp'] };
+    const state = reconcileUnlocks(legacy);
+    expect(state.unlockedTopics).not.toContain('algorithms:Advanced:string-algorithms');
+    expect(isStageUnlocked('Advanced', state)).toBe(false);
   });
 });

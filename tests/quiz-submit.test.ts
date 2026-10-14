@@ -62,9 +62,9 @@ describe('POST /api/quiz/submit', () => {
   });
 
   it('refuses locked lessons', async () => {
-    const lockedQuiz = getLessonQuiz('array-histogram')!;
+    const lockedQuiz = getLessonQuiz('array-next-perm')!;
     const answers = lockedQuiz.questions.map((q) => ({ questionId: q.id, choiceIndex: q.correctAnswer }));
-    expect((await POST(request({ lessonId: 'array-histogram', answers }))).status).toBe(403);
+    expect((await POST(request({ lessonId: 'array-next-perm', answers }))).status).toBe(403);
   });
 
   it('is rate limited', async () => {

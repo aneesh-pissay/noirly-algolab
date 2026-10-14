@@ -40,7 +40,7 @@ export const trackTheory: Record<TrackId, TrackTheory> = {
       'Graph and greedy algorithms power routing, recommendations, and scheduling systems',
     ],
     pathOverview:
-      'Begin with sorting, searching, and recursion. Progress to backtracking, trees, and greedy methods. Finish with graph algorithms, dynamic programming, and bit manipulation.',
+      'Begin with sorting, searching, and recursion. Progress to backtracking, trees, greedy methods, and bit manipulation. Finish with graph algorithms, dynamic programming, string algorithms, and advanced binary search.',
   },
   patterns: {
     overview:
@@ -51,7 +51,7 @@ export const trackTheory: Record<TrackId, TrackTheory> = {
       'Pattern recognition cuts problem-solving time dramatically',
     ],
     pathOverview:
-      'Master two pointers and sliding window first, then fast/slow pointers, monotonic stacks, and graph traversal patterns.',
+      'Master two pointers, sliding window, and fast/slow pointers first, then monotonic stacks.',
   },
 };
 
@@ -253,7 +253,7 @@ const topicTheoryMap: Record<string, TopicTheory> = {
   'bit-algorithms': {
     overview:
       'Bit manipulation exploits binary representation for compact storage and O(1) operations on individual flags.',
-    keyConcepts: ['AND/OR/XOR masks', 'Bit shifting', 'Subset enumeration', 'Bitmask DP'],
+    keyConcepts: ['AND/OR/XOR masks', 'Bit shifting', 'Subset enumeration', 'Power-of-two tricks'],
     realWorld: ['Permission flags', 'Compression', 'Network protocols', 'Graphics pixel operations'],
     studyTip: 'Learn XOR tricks: a ^ a = 0, a ^ 0 = a. Single number problems love XOR.',
   },
@@ -285,12 +285,19 @@ const topicTheoryMap: Record<string, TopicTheory> = {
     realWorld: ['Stock price analysis', 'Temperature forecasting UI', 'Bar chart max area', 'Compiler parsing'],
     studyTip: 'Pop from stack while current element violates monotonic order, then push current.',
   },
-  'graph-patterns': {
+  'string-algorithms': {
     overview:
-      'Graph patterns combine BFS, DFS, topological sort, and union-find to solve connectivity, ordering, and path problems.',
-    keyConcepts: ['Multi-source BFS', 'Grid as graph', 'Topological ordering', 'Island counting'],
-    realWorld: ['Maze solving', 'Spreadsheet dependency order', 'Flood fill in images', 'Epidemic modeling'],
-    studyTip: 'Convert grids to graphs: each cell is a node, edges go to adjacent cells.',
+      'String algorithms match patterns and find palindromes in linear time by reusing work a naive scan throws away: rolling hashes, prefix tables, and mirrored radii.',
+    keyConcepts: ['Rolling hash', 'Prefix function (failure table)', 'Palindrome radii', 'Avoiding re-comparison'],
+    realWorld: ['Text editors find/replace', 'Plagiarism detection', 'DNA sequence search', 'Intrusion detection signatures'],
+    studyTip: 'Run the naive O(n·m) search by hand first, and spot the comparisons each algorithm skips.',
+  },
+  'advanced-searching': {
+    overview:
+      'Advanced binary search goes beyond finding a value: it searches a range of possible answers, or a partition point between two arrays.',
+    keyConcepts: ['Monotonic predicates', 'Search on the answer space', 'Partitioning two sorted arrays', 'Off-by-one boundaries'],
+    realWorld: ['Capacity planning', 'Load balancing thresholds', 'Database query optimizers', 'Statistics on merged data'],
+    studyTip: 'Write the yes/no question you are binary searching on before writing the loop.',
   },
 };
 
