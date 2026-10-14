@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/src/components/ThemeToggle';
 import { NoirlyLoginButton } from '@/app/components/NoirlyLoginButton';
 import { safeNextPath } from '@/src/server/auth/routes';
 import { loginErrorMessage } from './messages';
+import { PopupErrorRelay } from './PopupErrorRelay';
 
 export const metadata: Metadata = {
   title: 'Sign in · Noirly AlgoLab',
@@ -43,13 +44,14 @@ export default async function LoginPage({
         }
       >
         <div className="flex flex-col gap-4">
+          {error ? <PopupErrorRelay error={error} /> : null}
           {message ? (
             <p role="alert" className="rounded-[var(--r-md)] bg-[var(--accent-soft)] p-3 text-sm text-[var(--text)]">
               {message}
             </p>
           ) : null}
           <NoirlyLoginButton next={redirectTo} />
-          <p className="meta text-center">You&apos;ll come back here after signing in</p>
+          <p className="meta text-center">Opens Identity in a secure popup</p>
         </div>
       </AuthShell>
     </div>

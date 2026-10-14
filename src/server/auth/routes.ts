@@ -9,6 +9,8 @@ export function isPublicPath(pathname: string): boolean {
     pathname === '/' ||
     pathname === '/privacy' ||
     pathname === '/login' ||
+    pathname === '/login/popup' ||
+    pathname === '/login/popup-complete' ||
     pathname === '/visual-lab' ||
     pathname.startsWith('/visual-lab/') ||
     pathname.startsWith('/.well-known/') ||
