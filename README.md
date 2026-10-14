@@ -98,5 +98,9 @@ password fields remain in the database but are no longer used.
 ## Deployment
 
 Vercel: set the environment above (with `GITHUB_TOKEN` available at install
-time), and add the production redirect URI to the Identity client. The proxy
+time), and add the production redirect URI to the Identity client.
+`AUTH_SECRET` and `AUTH_NOIRLY_ISSUER` are checked when the build collects page
+data, so they must be set for every environment that builds (Production and
+Preview); a missing or weak value fails the build with a message naming it.
+The pre-Identity app used `JWT_SECRET`, which is no longer read. The proxy
 sets a per-request CSP nonce, so pages render dynamically.
