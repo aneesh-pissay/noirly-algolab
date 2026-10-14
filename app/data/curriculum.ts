@@ -322,10 +322,9 @@ export const tracks: Track[] = [
               lesson('graph-cycle', 'Detect Cycle', 'graph-detect-cycle', 'Medium', 'O(V+E)', 'O(V)'),
               lesson('graph-topo', 'Topological Sort', 'graph-topological-sort', 'Medium', 'O(V+E)', 'O(V)'),
               lesson('graph-islands', 'Number of Islands', 'graph-number-of-islands', 'Medium', 'O(V+E)', 'O(V)'),
+              lesson('graph-components', 'Connected Components', 'graph-connected-components', 'Medium', 'O(V+E)', 'O(V)'),
             ],
-            Hard: [
-              lesson('graph-components', 'Connected Components', 'graph-connected-components', 'Hard', 'O(V+E)', 'O(V)'),
-            ],
+            Hard: [],
           },
         },
       ],
