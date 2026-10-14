@@ -91,11 +91,11 @@ function StageCard({
       </div>
       {!stage.unlocked ? (
         <p className="mt-3 flex items-center gap-2 text-sm text-fg-2">
-          <Lock size={13} aria-hidden /> Finish the {previous} core in all three tracks to open this stage.
+          <Lock size={13} aria-hidden /> Finish the {previous} core in every track to open this stage.
         </p>
       ) : null}
       <div className="mt-4 grid gap-4 md:grid-cols-3">
-        {tracks.map((track) => {
+        {tracks.filter((track) => (track.topics[stage.level]?.length ?? 0) > 0).map((track) => {
           const Glyph = iconFor(track.id);
           const topics = track.topics[stage.level] ?? [];
           return (

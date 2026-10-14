@@ -77,5 +77,9 @@ test('the learning path is staged: Beginner in every track first', async ({ page
   await expect(page.getByRole('link', { name: 'Full path' })).toHaveAttribute('aria-current', 'page');
   await page.goto('/learn-path?track=algorithms');
   await expect(page.getByRole('button', { name: /^Intermediate/ })).toBeDisabled();
-  await expect(page.getByText('Opens after the Beginner core in all three tracks').first()).toBeVisible();
+  await expect(page.getByText('Opens after the Beginner core in every track').first()).toBeVisible();
+  // Patterns stops at Intermediate: no empty, never-opening Advanced card.
+  await page.goto('/learn-path?track=patterns');
+  await expect(page.getByRole('button', { name: /^Intermediate/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Advanced/ })).toHaveCount(0);
 });
